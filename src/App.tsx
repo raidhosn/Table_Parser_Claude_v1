@@ -1,17 +1,19 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
-import { 
-  Clipboard, 
-  Check, 
-  Download, 
-  ChevronDown, 
-  Upload, 
-  FileText, 
-  X, 
-  Loader2, 
-  FileSpreadsheet, 
+import {
+  Clipboard,
+  Check,
+  Download,
+  ChevronDown,
+  Upload,
+  FileText,
+  X,
+  Loader2,
+  FileSpreadsheet,
   AlertCircle,
   Trash2,
-  FileType
+  FileType,
+  Languages,
+  Eraser
 } from 'lucide-react';
 
 // -- External Library Declarations --
@@ -77,6 +79,11 @@ const cleanAzureDevOpsHeader = (text: string): string => {
 const cleanRegion = (region: string): string => {
     if (!region) return region;
     return region.replace(/\s\([A-Z]+\)/g, '').trim();
+};
+
+const cleanVMType = (vmType: string): string => {
+    if (!vmType) return vmType;
+    return vmType.replace(/\s*\(XIO\)/gi, '').trim();
 };
 
 // -- Component: CopyButton --
@@ -251,6 +258,81 @@ const ExcelExportButton: React.FC<ExcelExportButtonProps> = ({ headers, data, fi
     );
 };
 
+// -- Portuguese Translation Mappings --
+const PORTUGUESE_TRANSLATIONS: Record<string, string> = {
+    // Headers
+    'Subscription ID': 'ID da Assinatura',
+    'Request Type': 'Tipo de Solicitação',
+    'VM Type': 'Tipo de VM',
+    'Region': 'Região',
+    'Zone': 'Zona',
+    'Cores': 'Núcleos',
+    'Status': 'Status',
+    'RDQuota': 'RDQuota',
+    // Request Types
+    'Quota Increase': 'Aumento de Cota',
+    'Region Enablement & Quota Increase': 'Habilitação Regional e Aumento de Cota',
+    'Region Enablement': 'Habilitação Regional',
+    'Region Limit Increase': 'Aumento de Limite de Região',
+    'Zonal Enablement': 'Habilitação Zonal',
+    'Reserved Instances': 'Instâncias Reservadas',
+    // Status values
+    'Fulfilled': 'Concluído',
+    'Approved': 'Aprovado',
+    'Backlogged': 'Em Espera',
+    'Pending Customer Response': 'Aguardando Resposta do Cliente',
+    'N/A': 'N/A'
+};
+
+const translateToPortuguese = (value: string): string => {
+    return PORTUGUESE_TRANSLATIONS[value] || value;
+};
+
+// -- Component: TranslateButton --
+interface TranslateButtonProps {
+    isPortuguese: boolean;
+    onToggle: () => void;
+}
+
+const TranslateButton: React.FC<TranslateButtonProps> = ({ isPortuguese, onToggle }) => {
+    return (
+        <button
+            onClick={onToggle}
+            className={`flex items-center justify-center px-3 py-1.5 border text-xs font-medium rounded-md transition-all duration-150 shadow-sm ${
+                isPortuguese
+                    ? 'bg-blue-100 text-blue-700 hover:bg-blue-200 border-blue-300'
+                    : 'bg-white text-gray-700 hover:bg-gray-50 border-gray-300'
+            }`}
+            title={isPortuguese ? "Switch to English" : "Translate to Portuguese"}
+        >
+            <Languages className="h-4 w-4 mr-2" />
+            {isPortuguese ? 'Português' : 'Translate to Portuguese'}
+        </button>
+    );
+};
+
+// -- Helper: Transform data for Portuguese display --
+const getTranslatedHeaders = (headers: string[]): string[] => {
+    return headers.map(h => translateToPortuguese(h));
+};
+
+const getTranslatedData = (data: Record<string, any>[], headers: string[]): Record<string, any>[] => {
+    const translatedHeaders = getTranslatedHeaders(headers);
+    return data.map(row => {
+        const newRow: Record<string, string> = {};
+        headers.forEach((header, index) => {
+            const translatedHeader = translatedHeaders[index];
+            const cellValue = String(row[header] ?? '');
+            newRow[translatedHeader] = translateToPortuguese(cellValue);
+        });
+        // Preserve Original ID for key purposes
+        if (row['Original ID']) {
+            newRow['Original ID'] = row['Original ID'];
+        }
+        return newRow;
+    });
+};
+
 // -- Component: DataTable --
 interface DataTableProps {
     headers: string[];
@@ -258,24 +340,46 @@ interface DataTableProps {
 }
 
 const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
+    // Calculate column count for grid layout
+    const columnCount = headers.length;
+
     return (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-inner max-h-[500px]">
-            <table className="min-w-full bg-white text-sm">
-                <thead className="bg-gray-800 sticky top-0 z-10">
-                    <tr className="divide-x divide-gray-700">
-                        {headers.map((header) => (
-                            <th key={header} className="whitespace-nowrap px-4 py-3 text-center font-medium text-white uppercase tracking-wider text-xs">
+        <div className="overflow-x-auto rounded-lg border-2 border-gray-300 shadow-md max-h-[500px]">
+            <table className="w-full bg-white text-sm border-collapse" style={{ tableLayout: 'fixed' }}>
+                <thead className="bg-gradient-to-b from-gray-700 to-gray-800 sticky top-0 z-10">
+                    <tr>
+                        {headers.map((header, index) => (
+                            <th
+                                key={header}
+                                className={`px-4 py-3.5 text-center font-bold text-white uppercase tracking-wider text-xs border-b-2 border-gray-400 ${
+                                    index < columnCount - 1 ? 'border-r border-gray-600' : ''
+                                }`}
+                                style={{ width: `${100 / columnCount}%` }}
+                            >
                                 {header}
                             </th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-gray-200">
+                <tbody>
                     {data.map((row, rowIndex) => (
-                        <tr key={row['Original ID'] || rowIndex} className="divide-x divide-gray-200 hover:bg-blue-50 transition-colors">
+                        <tr
+                            key={row['Original ID'] || rowIndex}
+                            className={`hover:bg-blue-50 transition-colors ${
+                                rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                            }`}
+                        >
                             {headers.map((header, colIndex) => (
-                                <td key={`${rowIndex}-${colIndex}`} className="whitespace-nowrap px-4 py-2.5 text-gray-700 text-center">
-                                    {row[header]}
+                                <td
+                                    key={`${rowIndex}-${colIndex}`}
+                                    className={`px-4 py-3 text-gray-700 text-center border-b border-gray-200 ${
+                                        colIndex < columnCount - 1 ? 'border-r border-gray-200' : ''
+                                    }`}
+                                    style={{ width: `${100 / columnCount}%` }}
+                                >
+                                    <span className="block truncate" title={String(row[header] ?? '')}>
+                                        {row[header]}
+                                    </span>
                                 </td>
                             ))}
                         </tr>
@@ -286,6 +390,54 @@ const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
     );
 };
 
+// -- Component: UnifiedTableSection --
+interface UnifiedTableSectionProps {
+    title: string;
+    headers: string[];
+    data: Record<string, any>[];
+    filename: string;
+}
+
+const UnifiedTableSection: React.FC<UnifiedTableSectionProps> = ({ title, headers, data, filename }) => {
+    const [isPortuguese, setIsPortuguese] = useState(false);
+
+    // Get translated or original headers and data based on toggle
+    const currentHeaders = isPortuguese ? getTranslatedHeaders(headers) : headers;
+    const currentData = isPortuguese ? getTranslatedData(data, headers) : data;
+
+    return (
+        <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-8">
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                    <div className="bg-blue-100 p-2 rounded-lg">
+                        <FileSpreadsheet className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-gray-800">{title}</h2>
+                </div>
+                <div className="flex items-center space-x-3">
+                    <ExcelExportButton headers={currentHeaders} data={currentData} filename={filename} />
+                    <TranslateButton isPortuguese={isPortuguese} onToggle={() => setIsPortuguese(!isPortuguese)} />
+                    <CopyButton headers={currentHeaders} data={currentData} />
+                </div>
+            </div>
+            <DataTable headers={currentHeaders} data={currentData} />
+        </div>
+    );
+};
+
+// -- Helper: Request types that should hide the Zone column --
+const REQUEST_TYPES_WITHOUT_ZONE = [
+    'Quota Increase',
+    'Region Enablement & Quota Increase',
+    'Region Enablement',
+    'Region Limit Increase'
+];
+
+// -- Helper: Request types that should hide the Cores column --
+const REQUEST_TYPES_WITHOUT_CORES = [
+    'Zonal Enablement'
+];
+
 // -- Component: CategorySection --
 interface CategorySectionProps {
     categoryName: string;
@@ -295,7 +447,22 @@ interface CategorySectionProps {
 
 const CategorySection: React.FC<CategorySectionProps> = ({ categoryName, data, headers }) => {
     const [isOpen, setIsOpen] = useState(true);
-    const displayHeaders = headers || finalHeaders;
+    const [isPortuguese, setIsPortuguese] = useState(false);
+
+    // Determine which columns should be hidden based on category name
+    const shouldHideZone = REQUEST_TYPES_WITHOUT_ZONE.includes(categoryName);
+    const shouldHideCores = REQUEST_TYPES_WITHOUT_CORES.includes(categoryName);
+    const baseHeaders = headers || finalHeaders;
+    const displayHeaders = baseHeaders.filter(h => {
+        if (h === 'Zone' && shouldHideZone) return false;
+        if (h === 'Cores' && shouldHideCores) return false;
+        return true;
+    });
+
+    // Get translated or original headers and data based on toggle
+    const currentHeaders = isPortuguese ? getTranslatedHeaders(displayHeaders) : displayHeaders;
+    const currentData = isPortuguese ? getTranslatedData(data, displayHeaders) : data;
+    const displayCategoryName = isPortuguese ? translateToPortuguese(categoryName) : categoryName;
 
     return (
         <div className="mb-6 rounded-xl bg-white shadow-sm border border-gray-200 overflow-hidden">
@@ -310,19 +477,20 @@ const CategorySection: React.FC<CategorySectionProps> = ({ categoryName, data, h
                     </div>
                     <div>
                         <h3 className="text-lg font-bold text-gray-800">
-                            {categoryName}
+                            {displayCategoryName}
                         </h3>
                         <span className="text-xs font-medium text-gray-500">{data.length} rows found</span>
                     </div>
                 </button>
                 <div className="flex-shrink-0 flex items-center space-x-2">
-                    <ExcelExportButton headers={displayHeaders} data={data} filename={`${categoryName.replace(/[\s/]/g, '_')}.xlsx`} />
-                    <CopyButton headers={displayHeaders} data={data} />
+                    <ExcelExportButton headers={currentHeaders} data={currentData} filename={`${categoryName.replace(/[\s/]/g, '_')}.xlsx`} />
+                    <TranslateButton isPortuguese={isPortuguese} onToggle={() => setIsPortuguese(!isPortuguese)} />
+                    <CopyButton headers={currentHeaders} data={currentData} />
                 </div>
             </div>
             {isOpen && (
                 <div className="p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <DataTable headers={displayHeaders} data={data} />
+                    <DataTable headers={currentHeaders} data={currentData} />
                 </div>
             )}
         </div>
@@ -719,12 +887,12 @@ const App: React.FC = () => {
                     return {
                         'Subscription ID': get('Subscription ID'),
                         'Request Type': get('Request Type'),
-                        'VM Type': get('VM Type'),
+                        'VM Type': cleanVMType(get('VM Type')),
                         'Region': cleanRegion(get('Region')),
                         'Zone': get('Zone'),
                         'Cores': get('Cores'),
                         'Status': status,
-                        'Original ID': `pre-transformed-${index}`, 
+                        'Original ID': `pre-transformed-${index}`,
                     };
                 });
 
@@ -786,7 +954,7 @@ const App: React.FC = () => {
                     return {
                         'Subscription ID': get("Subscription ID"),
                         'Request Type': finalRequestType,
-                        'VM Type': get("SKU"),
+                        'VM Type': cleanVMType(get("SKU")),
                         'Region': cleanRegion(get("Region")),
                         'Zone': zone,
                         'Cores': cores,
@@ -878,25 +1046,16 @@ const App: React.FC = () => {
                             ))}
                     </div>
 
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200 mb-8">
-                        <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-blue-100 p-2 rounded-lg">
-                                    <FileSpreadsheet className="h-6 w-6 text-blue-600" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-800">Unified Table</h2>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                                <ExcelExportButton headers={finalHeaders} data={transformedData} filename="Unified_Table.xlsx" />
-                                <CopyButton headers={finalHeaders} data={transformedData} />
-                            </div>
-                        </div>
-                        <DataTable headers={finalHeaders} data={transformedData} />
-                    </div>
+                    <UnifiedTableSection
+                        title="Unified Table"
+                        headers={finalHeaders}
+                        data={transformedData}
+                        filename="Unified_Table.xlsx"
+                    />
                 </div>
             );
         }
-    
+
         // List by RDQuotas View
         if (unifiedView === 'full') {
             const headersWithRdQuota = ['RDQuota', ...finalHeaders];
@@ -927,34 +1086,25 @@ const App: React.FC = () => {
                         {Object.entries(categorizedData)
                             .sort(([a], [b]) => a.localeCompare(b))
                             .map(([category, data]) => (
-                                <CategorySection 
-                                    key={category} 
-                                    categoryName={category} 
-                                    data={data.map(row => ({ ...row, RDQuota: row['Original ID'] }))} 
+                                <CategorySection
+                                    key={category}
+                                    categoryName={category}
+                                    data={data.map(row => ({ ...row, RDQuota: row['Original ID'] }))}
                                     headers={headersWithRdQuota}
                                 />
                             ))}
                     </div>
-    
-                    <div className="bg-white p-6 rounded-xl shadow-lg border border-gray-200">
-                         <div className="flex items-center justify-between mb-6">
-                            <div className="flex items-center gap-3">
-                                <div className="bg-blue-100 p-2 rounded-lg">
-                                    <FileSpreadsheet className="h-6 w-6 text-blue-600" />
-                                </div>
-                                <h2 className="text-2xl font-bold text-gray-800">Unified Table (with IDs)</h2>
-                            </div>
-                            <div className="flex items-center space-x-3">
-                                 <ExcelExportButton headers={headersWithRdQuota} data={unifiedDataWithRdQuota} filename="Unified_Table_by_RDQuota.xlsx" />
-                                 <CopyButton headers={headersWithRdQuota} data={unifiedDataWithRdQuota} />
-                            </div>
-                        </div>
-                        <DataTable headers={headersWithRdQuota} data={unifiedDataWithRdQuota} />
-                    </div>
+
+                    <UnifiedTableSection
+                        title="Unified Table (with IDs)"
+                        headers={headersWithRdQuota}
+                        data={unifiedDataWithRdQuota}
+                        filename="Unified_Table_by_RDQuota.xlsx"
+                    />
                 </div>
             );
         }
-    
+
         return null;
     };
 
@@ -993,8 +1143,8 @@ const App: React.FC = () => {
             </header>
             
             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
-                {!transformedData && <DataInputCard onDataLoaded={handleDataLoaded} />}
-                
+                <DataInputCard onDataLoaded={handleDataLoaded} />
+
                 <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-200 mb-8 transition-all focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-400">
                      <label htmlFor="raw-input" className="block text-sm font-semibold text-gray-700 mb-3 uppercase tracking-wide">
                          Raw Data Input
@@ -1012,19 +1162,28 @@ const App: React.FC = () => {
                             {rawInput.length > 0 ? `${rawInput.split('\n').length} lines` : 'Ready for input'}
                         </div>
                         <div className="flex space-x-3">
-                            {transformedData && unifiedView === 'none' && (
-                                 <button
-                                    onClick={() => setUnifiedView('full')}
+                            <button
+                                onClick={() => setRawInput('')}
+                                className="px-5 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all shadow-sm flex items-center gap-2"
+                                title="Clear raw data input"
+                                disabled={rawInput.length === 0}
+                            >
+                                <Eraser className="h-4 w-4" />
+                                Clear
+                            </button>
+                            {transformedData && (
+                                <button
+                                    onClick={() => setUnifiedView(unifiedView === 'none' ? 'full' : 'none')}
                                     className="px-5 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all shadow-sm"
                                 >
-                                    View by IDs
+                                    {unifiedView === 'none' ? 'View by IDs' : 'Default View'}
                                 </button>
                             )}
                             <button
                                 onClick={handleTransform}
                                 className="px-8 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md flex items-center gap-2"
                             >
-                                {transformedData ? 'Re-Transform' : 'Transform Data'}
+                                {transformedData ? 'Transform' : 'Transform Data'}
                             </button>
                         </div>
                     </div>
