@@ -8,17 +8,17 @@ interface CopyButtonProps {
 }
 
 /**
- * Generates an HTML table with dark grid styling for clipboard export.
- * Uses dark gray background, white text, gray borders, Calibri Light font.
+ * Generates an HTML table for clipboard export.
+ * Uses no colors - black text, black borders, transparent background.
  * Applies styles to EVERY cell individually to ensure persistence in Word/Outlook.
  */
 const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[]): string => {
-    // Table style with dark theme and MSO compatibility
-    const tableStyle = "border-collapse: collapse; background-color: #3a3a3a; background: #3a3a3a; color: #ffffff; font-family: 'Calibri Light', Calibri, sans-serif; font-size: 11pt; font-weight: 300; mso-background-source: auto;";
-    // Row style for consistent background
-    const rowStyle = "background-color: #3a3a3a; background: #3a3a3a;";
-    // Cell style with forced dark background and white text on EVERY cell
-    const cellStyle = "border: 1px solid #6a6a6a; padding: 4px 8px; text-align: left; font-weight: 300; background-color: #3a3a3a !important; background: #3a3a3a; color: #ffffff !important; mso-background-source: auto;";
+    // Table style with no colors
+    const tableStyle = "border-collapse: collapse; font-family: 'Calibri Light', Calibri, sans-serif; font-size: 11pt; font-weight: 300;";
+    // Row style (no background)
+    const rowStyle = "";
+    // Cell style with black borders, no background color
+    const cellStyle = "border: 1px solid #000000; padding: 4px 8px; text-align: left; font-weight: 300;";
 
     // Generate header row with styled cells
     const headerCells = headers

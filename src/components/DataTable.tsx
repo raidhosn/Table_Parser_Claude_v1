@@ -8,28 +8,28 @@ interface DataTableProps {
 
 export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
     return (
-        <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-sm">
-            <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+        <div className="overflow-x-auto rounded-lg border border-black">
+            <table className="min-w-full divide-y divide-black">
+                <thead>
                     <tr>
                         {headers.map((header, index) => (
                             <th
                                 key={index}
                                 scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider whitespace-nowrap"
+                                className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap border-b border-black"
                             >
                                 {header}
                             </th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
+                <tbody className="divide-y divide-black">
                     {data.map((row, rowIndex) => (
-                        <tr key={rowIndex} className="hover:bg-gray-50 transition-colors">
+                        <tr key={rowIndex}>
                             {headers.map((header, colIndex) => (
                                 <td
                                     key={`${rowIndex}-${colIndex}`}
-                                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-700"
+                                    className="px-6 py-4 whitespace-nowrap text-sm"
                                 >
                                     {cleanValue(row[header])}
                                 </td>
