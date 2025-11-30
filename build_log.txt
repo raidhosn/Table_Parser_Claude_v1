@@ -1,0 +1,15 @@
+
+> quota-data-transformer@1.0.0 build
+> tsc && vite build
+
+src/components/CategorySection.tsx(80,25): error TS2322: Type '(keyof TransformedRow)[]' is not assignable to type 'string[]'.
+  Type 'keyof TransformedRow' is not assignable to type 'string'.
+    Type 'number' is not assignable to type 'string'.
+src/components/CategorySection.tsx(85,33): error TS2322: Type '(keyof TransformedRow)[]' is not assignable to type 'string[]'.
+  Type 'keyof TransformedRow' is not assignable to type 'string'.
+    Type 'number' is not assignable to type 'string'.
+src/components/CategorySection.tsx(90,32): error TS2322: Type '(keyof TransformedRow)[]' is not assignable to type 'string[]'.
+  Type 'keyof TransformedRow' is not assignable to type 'string'.
+    Type 'number' is not assignable to type 'string'.
+src/components/CopyButton.tsx(1,40): error TS6133: 'useEffect' is declared but its value is never read.
+src/components/UploadModal.tsx(2,21): error TS6133: 'FileText' is declared but its value is never read.

@@ -1,0 +1,4 @@
+Subscription ID,Request Type,VM Type,Region,Zone,Cores,Status,ID
+sub-123,Quota Increase,Standard_D2s_v3,East US,1,10,Approved,req-001
+sub-456,Region Enablement,Standard_E4s_v3,West Europe,,20,Pending,req-002
+sub-789,Zonal Enablement,Standard_F2s_v2,North Europe,2,,Fulfilled,req-003
