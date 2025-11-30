@@ -52,14 +52,16 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
         // Also try to copy as HTML table for Excel pasting support
         const listener = (e: ClipboardEvent) => {
             e.preventDefault();
+            const tableStyle = 'border-collapse: collapse;';
+            const cellStyle = 'border: 1px solid black; padding: 8px; text-align: center;';
             const htmlTable = `
-                <table>
+                <table style="${tableStyle}">
                     <thead>
-                        <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+                        <tr>${headers.map(h => `<th style="${cellStyle}">${h}</th>`).join('')}</tr>
                     </thead>
                     <tbody>
                         ${data.map(row => `
-                            <tr>${headers.map(h => `<td>${cleanValue(row[h])}</td>`).join('')}</tr>
+                            <tr>${headers.map(h => `<td style="${cellStyle}">${cleanValue(row[h])}</td>`).join('')}</tr>
                         `).join('')}
                     </tbody>
                 </table>
