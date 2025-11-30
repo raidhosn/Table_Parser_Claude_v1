@@ -79,6 +79,18 @@ const cleanRegion = (region: string): string => {
     return region.replace(/\s\([A-Z]+\)/g, '').trim();
 };
 
+// Escape HTML special characters to prevent XSS
+const escapeHtml = (text: string): string => {
+    const htmlEscapes: Record<string, string> = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+    };
+    return text.replace(/[&<>"']/g, (char) => htmlEscapes[char]);
+};
+
 // -- Component: CopyButton --
 interface CopyButtonProps {
     headers: string[];
@@ -102,15 +114,15 @@ const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
         const htmlHeader = `
             <thead>
                 <tr>
-                    ${headers.map(h => `<th style="border: 1px solid #000000; background-color: #f3f4f6; padding: 8px; font-weight: bold; text-align: center;">${h}</th>`).join('')}
+                    ${headers.map(h => `<th style="border: 1px solid #000000; background-color: #f3f4f6; padding: 8px; font-weight: bold; text-align: center;">${escapeHtml(h)}</th>`).join('')}
                 </tr>
             </thead>`;
-            
+
         const htmlBody = `
             <tbody>
                 ${data.map(row => `
                     <tr>
-                        ${headers.map(h => `<td style="border: 1px solid #000000; padding: 8px; text-align: center;">${String(row[h] ?? '')}</td>`).join('')}
+                        ${headers.map(h => `<td style="border: 1px solid #000000; padding: 8px; text-align: center;">${escapeHtml(String(row[h] ?? ''))}</td>`).join('')}
                     </tr>
                 `).join('')}
             </tbody>`;
@@ -258,6 +270,31 @@ interface DataTableProps {
 }
 
 const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
+    if (!data || data.length === 0) {
+        return (
+            <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-inner">
+                <table className="min-w-full bg-white text-sm">
+                    <thead className="bg-gray-800">
+                        <tr className="divide-x divide-gray-700">
+                            {headers.map((header) => (
+                                <th key={header} className="whitespace-nowrap px-4 py-3 text-center font-medium text-white uppercase tracking-wider text-xs">
+                                    {header}
+                                </th>
+                            ))}
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td colSpan={headers.length} className="px-4 py-8 text-center text-gray-500">
+                                No data available
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        );
+    }
+
     return (
         <div className="overflow-x-auto rounded-lg border border-gray-200 shadow-inner max-h-[500px]">
             <table className="min-w-full bg-white text-sm">
@@ -321,7 +358,7 @@ const CategorySection: React.FC<CategorySectionProps> = ({ categoryName, data, h
                 </div>
             </div>
             {isOpen && (
-                <div className="p-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="p-4 animate-slide-in-from-top">
                     <DataTable headers={displayHeaders} data={data} />
                 </div>
             )}
@@ -341,6 +378,7 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDataLoaded
     const [error, setError] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const modalRef = useRef<HTMLDivElement>(null);
     const [sheetNames, setSheetNames] = useState<string[] | null>(null);
     const [workbook, setWorkbook] = useState<any | null>(null);
 
@@ -355,9 +393,30 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDataLoaded
         }
     }, []);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         resetState();
         onClose();
+    }, [resetState, onClose]);
+
+    // Handle ESC key to close modal
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                handleClose();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, handleClose]);
+
+    // Handle click outside modal to close
+    const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+        if (e.target === e.currentTarget) {
+            handleClose();
+        }
     };
 
     const handleFile = useCallback(async (file: File) => {
@@ -497,8 +556,11 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDataLoaded
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity">
-            <div className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-6 animate-in zoom-in-95 duration-200">
+        <div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 transition-opacity"
+            onClick={handleBackdropClick}
+        >
+            <div ref={modalRef} className="relative w-full max-w-2xl bg-white rounded-2xl shadow-2xl p-6 animate-zoom-in">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-2xl font-bold text-gray-800">{sheetNames ? 'Select a Sheet' : 'Upload Data'}</h2>
                     <button onClick={handleClose} className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors">
@@ -627,33 +689,17 @@ const App: React.FC = () => {
     const [error, setError] = useState<string | null>(null);
     const [unifiedView, setUnifiedView] = useState<'none' | 'full'>('none');
     
-    // Dynamically load external scripts for parsing
+    // Check if external scripts are loaded (they are included in index.html)
     useEffect(() => {
-        const loadScript = (src: string) => {
-            return new Promise<void>((resolve, reject) => {
-                if (document.querySelector(`script[src="${src}"]`)) {
-                    resolve();
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = src;
-                script.async = true;
-                script.onload = () => resolve();
-                script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-                document.head.appendChild(script);
-            });
+        const checkScripts = () => {
+            if (typeof XLSX !== 'undefined' && typeof mammoth !== 'undefined') {
+                setScriptsLoaded(true);
+            } else {
+                // Scripts may still be loading, retry after a short delay
+                setTimeout(checkScripts, 100);
+            }
         };
-
-        Promise.all([
-            loadScript('https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js'),
-            loadScript('https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js')
-        ]).then(() => {
-            setScriptsLoaded(true);
-        }).catch((err) => {
-            console.error("Failed to load dependencies", err);
-            // We still allow the app to load, buttons will just check for global presence
-            setScriptsLoaded(true);
-        });
+        checkScripts();
     }, []);
 
     const handleTransform = useCallback(() => {
@@ -703,9 +749,13 @@ const App: React.FC = () => {
 
             if (isAlreadyTransformed) {
                 // Data is already in the final format
+                // Check if Original ID column exists
+                const hasOriginalId = headers.includes('Original ID');
+                const hasRDQuota = headers.includes('RDQuota');
+
                 processedRows = dataLines.map((line, index) => {
                     const values = line.split(separator).map(v => v.trim().replace(/"/g, ''));
-                    const get = (col: keyof Omit<TransformedRow, 'Original ID'>) => values[headerMap[col]]?.trim() || '';
+                    const get = (col: string) => values[headerMap[col]]?.trim() || '';
 
                     let status = get('Status');
                     if (status === 'Verification Successful') {
@@ -716,15 +766,32 @@ const App: React.FC = () => {
                         status = 'Pending Customer Response';
                     }
 
+                    // Handle empty Request Type
+                    let requestType = get('Request Type');
+                    if (!requestType) {
+                        requestType = 'Uncategorized';
+                    }
+
+                    // Preserve existing Original ID or RDQuota if present
+                    let originalId = '';
+                    if (hasOriginalId) {
+                        originalId = get('Original ID');
+                    } else if (hasRDQuota) {
+                        originalId = get('RDQuota');
+                    }
+                    if (!originalId) {
+                        originalId = `row-${index + 1}`;
+                    }
+
                     return {
                         'Subscription ID': get('Subscription ID'),
-                        'Request Type': get('Request Type'),
+                        'Request Type': requestType,
                         'VM Type': get('VM Type'),
                         'Region': cleanRegion(get('Region')),
                         'Zone': get('Zone'),
                         'Cores': get('Cores'),
                         'Status': status,
-                        'Original ID': `pre-transformed-${index}`, 
+                        'Original ID': originalId,
                     };
                 });
 
@@ -745,7 +812,7 @@ const App: React.FC = () => {
 
                 processedRows = dataLines.map((line) => {
                     const values = line.split(separator).map(v => v.trim().replace(/"/g, ''));
-                    
+
                     const get = (col: string) => values[headerMap[col]]?.trim() || '';
 
                     const originalRequestType = get("UTC Ticket");
@@ -758,7 +825,7 @@ const App: React.FC = () => {
                     } else if (cores === '-1') {
                         cores = '';
                     }
-                    
+
                     if (!zone) {
                         zone = 'N/A';
                     }
@@ -783,21 +850,34 @@ const App: React.FC = () => {
                         status = 'Pending Customer Response';
                     }
 
+                    // Check if row is effectively empty (before setting Uncategorized)
+                    const subscriptionId = get("Subscription ID");
+                    const vmType = get("SKU");
+                    const region = get("Region");
+                    const isRowEmpty = zone === 'N/A' && !subscriptionId && !vmType && !region && !finalRequestType;
+
+                    // Handle empty Request Type (set to Uncategorized if not empty row)
+                    if (!finalRequestType) {
+                        finalRequestType = 'Uncategorized';
+                    }
+
                     return {
-                        'Subscription ID': get("Subscription ID"),
+                        'Subscription ID': subscriptionId,
                         'Request Type': finalRequestType,
-                        'VM Type': get("SKU"),
-                        'Region': cleanRegion(get("Region")),
+                        'VM Type': vmType,
+                        'Region': cleanRegion(region),
                         'Zone': zone,
                         'Cores': cores,
                         'Status': status,
                         'Original ID': get("RDQuota") || get("ID"),
+                        '_isEmpty': isRowEmpty, // Internal flag for filtering
                     };
                 }).filter(row => {
-                    const isZoneNA = row['Zone'] === 'N/A';
-                    const isRowEffectivelyEmpty = !row['Subscription ID'] && !row['VM Type'] && !row['Region'] && !row['Request Type'];
-                    return !(isZoneNA && isRowEffectivelyEmpty);
-                });
+                    // Filter out empty rows
+                    const isEmpty = (row as any)._isEmpty;
+                    delete (row as any)._isEmpty;
+                    return !isEmpty;
+                }) as TransformedRow[];
             }
 
             if (processedRows.length === 0) {
@@ -850,7 +930,7 @@ const App: React.FC = () => {
         // Default View
         if (unifiedView === 'none') {
             return (
-                <div className="animate-in slide-in-from-bottom-4 duration-500">
+                <div className="animate-slide-in-from-bottom">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
                             <p className="text-3xl font-bold text-blue-600">{transformedData.length}</p>
@@ -901,9 +981,9 @@ const App: React.FC = () => {
         if (unifiedView === 'full') {
             const headersWithRdQuota = ['RDQuota', ...finalHeaders];
             const unifiedDataWithRdQuota = transformedData.map(row => ({ ...row, RDQuota: row['Original ID'] }));
-    
+
             return (
-                 <div className="animate-in slide-in-from-bottom-4 duration-500">
+                 <div className="animate-slide-in-from-bottom">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                         <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
                             <p className="text-3xl font-bold text-blue-600">{transformedData.length}</p>
@@ -1002,7 +1082,7 @@ const App: React.FC = () => {
                     <textarea
                         id="raw-input"
                         rows={transformedData ? 4 : 12}
-                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 border-transparent bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
+                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
                         placeholder="Paste your TSV, CSV, or raw text data here..."
                         value={rawInput}
                         onChange={(e) => setRawInput(e.target.value)}
@@ -1020,6 +1100,14 @@ const App: React.FC = () => {
                                     View by IDs
                                 </button>
                             )}
+                            {transformedData && unifiedView === 'full' && (
+                                 <button
+                                    onClick={() => setUnifiedView('none')}
+                                    className="px-5 py-2.5 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all shadow-sm"
+                                >
+                                    Default View
+                                </button>
+                            )}
                             <button
                                 onClick={handleTransform}
                                 className="px-8 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md flex items-center gap-2"
@@ -1031,7 +1119,7 @@ const App: React.FC = () => {
                 </div>
 
                 {error && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl relative mb-8 animate-in slide-in-from-top-2 flex items-start gap-3">
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl relative mb-8 animate-slide-in-from-top flex items-start gap-3">
                          <AlertCircle className="h-6 w-6 mt-0.5 shrink-0" />
                          <div>
                             <strong className="font-bold block mb-1">Processing Error</strong>
