@@ -6,7 +6,7 @@ import { ExcelExportButton } from './ExcelExportButton';
 import { TranslateButton } from './TranslateButton';
 import { CopyButton } from './CopyButton';
 import { TransformedRow } from '../utils/types';
-import { DICTIONARY } from '../utils/constants';
+import { DICTIONARY, getVisibleHeadersForMixedData } from '../utils/constants';
 import { cleanValue } from '../utils/parser';
 
 interface ResultsViewProps {
@@ -24,11 +24,20 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
     isTranslated,
     setIsTranslated
 }) => {
-    const displayHeaders = useMemo(() => finalHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h), [finalHeaders, isTranslated]);
+    // Compute visible headers based on requestTypeCode (language-agnostic)
+    const visibleHeaders = useMemo(() =>
+        getVisibleHeadersForMixedData(finalHeaders, transformedData),
+        [finalHeaders, transformedData]
+    );
+
+    const displayHeaders = useMemo(() =>
+        visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h),
+        [visibleHeaders, isTranslated]
+    );
 
     const displayData = useMemo(() => transformedData.map(row => {
-        const newRow: Record<string, any> = { 'Original ID': row['Original ID'] };
-        finalHeaders.forEach(h => {
+        const newRow: Record<string, any> = { 'Original ID': row['Original ID'], requestTypeCode: row.requestTypeCode };
+        visibleHeaders.forEach(h => {
             const translatedKey = isTranslated ? (DICTIONARY[h] || h) : h;
             let val = (row as any)[h];
             if (isTranslated) {
@@ -37,7 +46,7 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
             newRow[translatedKey] = cleanValue(val);
         });
         return newRow;
-    }), [transformedData, finalHeaders, isTranslated]);
+    }), [transformedData, visibleHeaders, isTranslated]);
 
     const exportFilename = useMemo(() => {
         return isTranslated
@@ -57,7 +66,7 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
                     <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Categories</p>
                 </div>
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
-                    <p className="text-3xl font-bold text-emerald-600">{finalHeaders.length}</p>
+                    <p className="text-3xl font-bold text-emerald-600">{visibleHeaders.length}</p>
                     <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Columns</p>
                 </div>
             </div>
@@ -91,7 +100,7 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
                     <div className="flex items-center space-x-3">
                         <ExcelExportButton headers={displayHeaders} data={displayData} filename={exportFilename} />
                         <TranslateButton isTranslated={isTranslated} onToggle={() => setIsTranslated(!isTranslated)} />
-                        <CopyButton headers={finalHeaders} data={transformedData} />
+                        <CopyButton headers={visibleHeaders} data={transformedData} />
                     </div>
                 </div>
                 <DataTable headers={displayHeaders} data={displayData} />
@@ -107,13 +116,19 @@ export const UnifiedResultsView: React.FC<ResultsViewProps> = ({
     isTranslated,
     setIsTranslated
 }) => {
-    const headersWithRdQuota = useMemo(() => ['RDQuota', ...finalHeaders], [finalHeaders]);
+    // Compute visible headers based on requestTypeCode (language-agnostic)
+    const visibleBaseHeaders = useMemo(() =>
+        getVisibleHeadersForMixedData(finalHeaders, transformedData),
+        [finalHeaders, transformedData]
+    );
+
+    const headersWithRdQuota = useMemo(() => ['RDQuota', ...visibleBaseHeaders], [visibleBaseHeaders]);
     const unifiedDataWithRdQuota = useMemo(() => transformedData.map(row => ({ ...row, RDQuota: row['Original ID'] })), [transformedData]);
 
     const displayHeaders = useMemo(() => headersWithRdQuota.map(h => isTranslated ? (DICTIONARY[h] || h) : h), [headersWithRdQuota, isTranslated]);
 
     const displayData = useMemo(() => unifiedDataWithRdQuota.map(row => {
-        const newRow: Record<string, any> = { 'Original ID': row['Original ID'] };
+        const newRow: Record<string, any> = { 'Original ID': row['Original ID'], requestTypeCode: row.requestTypeCode };
         headersWithRdQuota.forEach(h => {
             const translatedKey = isTranslated ? (DICTIONARY[h] || h) : h;
             let val = (row as any)[h];

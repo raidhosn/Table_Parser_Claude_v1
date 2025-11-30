@@ -1,5 +1,6 @@
-import { TransformedRow } from './types';
+import { TransformedRow, RequestTypeCode } from './types';
 import { cleanRegion, cleanVmType } from './cleaners';
+import { REQUEST_TYPE_CODES } from './constants';
 
 // Feature flag for robust header detection
 const USE_ROBUST_HEADER_DETECTION = true;
@@ -23,6 +24,35 @@ export const cleanValue = (val: any): any => {
     if (val === undefined || val === null) return '';
     if (typeof val === 'string') return val.trim();
     return val;
+};
+
+/**
+ * Maps display Request Type strings (EN-US or PT-BR) to internal requestTypeCode.
+ * This enables language-agnostic logic by normalizing localized display values
+ * to stable internal codes.
+ */
+export const mapDisplayTypeToCode = (displayType: string): RequestTypeCode => {
+    const normalized = displayType.toLowerCase().trim();
+
+    // EN-US mappings
+    if (normalized === 'zonal enablement') return REQUEST_TYPE_CODES.ZONAL_ENABLEMENT;
+    if (normalized === 'region enablement') return REQUEST_TYPE_CODES.REGIONAL_ENABLEMENT;
+    if (normalized === 'region enablement & quota increase') return REQUEST_TYPE_CODES.REGION_ENABLEMENT_QUOTA_INCREASE;
+    if (normalized === 'quota increase') return REQUEST_TYPE_CODES.QUOTA_INCREASE;
+    if (normalized === 'quota decrease') return REQUEST_TYPE_CODES.QUOTA_DECREASE;
+    if (normalized === 'region limit increase') return REQUEST_TYPE_CODES.REGION_LIMIT_INCREASE;
+    if (normalized === 'reserved instances') return REQUEST_TYPE_CODES.RESERVED_INSTANCES;
+
+    // PT-BR mappings
+    if (normalized === 'habilitação zonal') return REQUEST_TYPE_CODES.ZONAL_ENABLEMENT;
+    if (normalized === 'habilitação regional') return REQUEST_TYPE_CODES.REGIONAL_ENABLEMENT;
+    if (normalized === 'habilitação regional & aumento de cota') return REQUEST_TYPE_CODES.REGION_ENABLEMENT_QUOTA_INCREASE;
+    if (normalized === 'aumento de cota') return REQUEST_TYPE_CODES.QUOTA_INCREASE;
+    if (normalized === 'diminuição de cota') return REQUEST_TYPE_CODES.QUOTA_DECREASE;
+    if (normalized === 'aumento de limite regional') return REQUEST_TYPE_CODES.REGION_LIMIT_INCREASE;
+    if (normalized === 'instâncias reservadas') return REQUEST_TYPE_CODES.RESERVED_INSTANCES;
+
+    return REQUEST_TYPE_CODES.UNKNOWN;
 };
 
 export const parseHtmlTable = (htmlString: string): string => {
@@ -181,15 +211,20 @@ export const transformData = (rawInput: string): { transformed: TransformedRow[]
                 status = 'Pending Customer Response';
             }
 
+            // Map display Request Type to internal requestTypeCode
+            const requestType = getVal('Request Type');
+            const requestTypeCode = mapDisplayTypeToCode(requestType);
+
             return {
                 'Subscription ID': getVal('Subscription ID'),
-                'Request Type': getVal('Request Type'),
+                'Request Type': requestType,
                 'VM Type': getVal('VM Type'),
                 'Region': cleanRegion(getVal('Region')),
                 'Zone': getVal('Zone'),
                 'Cores': getVal('Cores'),
                 'Status': status,
                 'Original ID': `pre-transformed-${index}`,
+                requestTypeCode,
             };
         });
     } else {
@@ -234,32 +269,36 @@ export const transformData = (rawInput: string): { transformed: TransformedRow[]
             }
 
             let finalRequestType = originalRequestType || 'Unknown';
-            let requestTypeCode = 'UNKNOWN';
+            let requestTypeCode: RequestTypeCode = REQUEST_TYPE_CODES.UNKNOWN;
 
             switch (originalRequestType) {
                 case 'AZ Enablement/Whitelisting':
                     finalRequestType = 'Zonal Enablement';
-                    requestTypeCode = 'ZONAL_ENABLEMENT';
+                    requestTypeCode = REQUEST_TYPE_CODES.ZONAL_ENABLEMENT;
                     break;
                 case 'Region Enablement/Whitelisting':
                     finalRequestType = 'Region Enablement';
-                    requestTypeCode = 'REGIONAL_ENABLEMENT';
+                    requestTypeCode = REQUEST_TYPE_CODES.REGIONAL_ENABLEMENT;
                     break;
                 case 'Whitelisting/Quota Increase':
                     finalRequestType = 'Region Enablement & Quota Increase';
-                    requestTypeCode = 'REGION_ENABLEMENT_QUOTA_INCREASE';
+                    requestTypeCode = REQUEST_TYPE_CODES.REGION_ENABLEMENT_QUOTA_INCREASE;
                     break;
                 case 'Quota Increase':
                     finalRequestType = 'Quota Increase';
-                    requestTypeCode = 'QUOTA_INCREASE';
+                    requestTypeCode = REQUEST_TYPE_CODES.QUOTA_INCREASE;
+                    break;
+                case 'Quota Decrease':
+                    finalRequestType = 'Quota Decrease';
+                    requestTypeCode = REQUEST_TYPE_CODES.QUOTA_DECREASE;
                     break;
                 case 'Region Limit Increase':
                     finalRequestType = 'Region Limit Increase';
-                    requestTypeCode = 'REGION_LIMIT_INCREASE';
+                    requestTypeCode = REQUEST_TYPE_CODES.REGION_LIMIT_INCREASE;
                     break;
                 case 'RI Enablement/Whitelisting':
                     finalRequestType = 'Reserved Instances';
-                    requestTypeCode = 'RESERVED_INSTANCES';
+                    requestTypeCode = REQUEST_TYPE_CODES.RESERVED_INSTANCES;
                     break;
             }
 
