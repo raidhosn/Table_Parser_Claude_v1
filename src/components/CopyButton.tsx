@@ -8,16 +8,16 @@ interface CopyButtonProps {
 }
 
 /**
- * Generates an HTML table with inline styles for clipboard export.
- * Uses border-collapse, 1px solid borders, 8px padding, and center text alignment.
+ * Generates an HTML table with dark grid styling for clipboard export.
+ * Uses dark gray background, white text, gray borders, Calibri Light font.
  */
 const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[]): string => {
-    // Table style with border-collapse
-    const tableStyle = "border-collapse: collapse;";
-    // Header cells: 1px solid border, 8px padding, center aligned
-    const headerCellStyle = "border: 1px solid #000000; padding: 8px; text-align: center; font-weight: bold;";
-    // Body cells: 1px solid border, 8px padding, center aligned
-    const bodyCellStyle = "border: 1px solid #000000; padding: 8px; text-align: center;";
+    // Table style with dark theme
+    const tableStyle = "border-collapse: collapse; background-color: #2d2d2d; color: #fff; font-family: 'Calibri Light', Calibri, sans-serif; font-size: 11pt; font-weight: 300;";
+    // Header cells: gray border, left aligned, no bold
+    const headerCellStyle = "border: 1px solid #555; padding: 4px 8px; text-align: left; font-weight: 300; background-color: #2d2d2d;";
+    // Body cells: gray border, left aligned
+    const bodyCellStyle = "border: 1px solid #555; padding: 4px 8px; text-align: left;";
 
     // Generate header row
     const headerCells = headers
