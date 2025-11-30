@@ -10,31 +10,32 @@ interface CopyButtonProps {
 /**
  * Generates an HTML table with dark grid styling for clipboard export.
  * Uses dark gray background, white text, gray borders, Calibri Light font.
+ * Applies styles to EVERY cell individually to ensure persistence in Word/Outlook.
  */
 const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[]): string => {
-    // Table style with dark theme
-    const tableStyle = "border-collapse: collapse; background-color: #2d2d2d; color: #fff; font-family: 'Calibri Light', Calibri, sans-serif; font-size: 11pt; font-weight: 300;";
-    // Header cells: gray border, left aligned, no bold
-    const headerCellStyle = "border: 1px solid #555; padding: 4px 8px; text-align: left; font-weight: 300; background-color: #2d2d2d;";
-    // Body cells: gray border, left aligned
-    const bodyCellStyle = "border: 1px solid #555; padding: 4px 8px; text-align: left;";
+    // Table style with dark theme and MSO compatibility
+    const tableStyle = "border-collapse: collapse; background-color: #3a3a3a; background: #3a3a3a; color: #ffffff; font-family: 'Calibri Light', Calibri, sans-serif; font-size: 11pt; font-weight: 300; mso-background-source: auto;";
+    // Row style for consistent background
+    const rowStyle = "background-color: #3a3a3a; background: #3a3a3a;";
+    // Cell style with forced dark background and white text on EVERY cell
+    const cellStyle = "border: 1px solid #6a6a6a; padding: 4px 8px; text-align: left; font-weight: 300; background-color: #3a3a3a !important; background: #3a3a3a; color: #ffffff !important; mso-background-source: auto;";
 
-    // Generate header row
+    // Generate header row with styled cells
     const headerCells = headers
-        .map(h => `<th style="${headerCellStyle}">${escapeHtml(h)}</th>`)
+        .map(h => `<th style="${cellStyle}">${escapeHtml(h)}</th>`)
         .join('');
 
-    // Generate body rows
+    // Generate body rows with styled cells
     const bodyRows = data
         .map(row => {
             const cells = headers
-                .map(h => `<td style="${bodyCellStyle}">${escapeHtml(cleanValue(row[h]))}</td>`)
+                .map(h => `<td style="${cellStyle}">${escapeHtml(cleanValue(row[h]))}</td>`)
                 .join('');
-            return `<tr>${cells}</tr>`;
+            return `<tr style="${rowStyle}">${cells}</tr>`;
         })
         .join('');
 
-    return `<table style="${tableStyle}"><thead><tr>${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    return `<table style="${tableStyle}"><thead><tr style="${rowStyle}">${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
 };
 
 /**
