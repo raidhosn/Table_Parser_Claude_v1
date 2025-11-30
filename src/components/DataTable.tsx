@@ -8,28 +8,31 @@ interface DataTableProps {
 
 export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
     return (
-        <div className="overflow-x-auto rounded-lg border border-black">
-            <table className="min-w-full divide-y divide-black">
+        <div className="overflow-x-auto rounded-lg bg-white shadow-sm border border-gray-200">
+            <table className="min-w-full">
                 <thead>
-                    <tr>
+                    <tr className="bg-[#1e3a5f] border-l-4 border-l-blue-500">
                         {headers.map((header, index) => (
                             <th
                                 key={index}
                                 scope="col"
-                                className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider whitespace-nowrap border-b border-black"
+                                className="px-4 py-3 text-center text-xs font-semibold uppercase tracking-wider text-white whitespace-nowrap border border-gray-600"
                             >
                                 {header}
                             </th>
                         ))}
                     </tr>
                 </thead>
-                <tbody className="divide-y divide-black">
+                <tbody>
                     {data.map((row, rowIndex) => (
-                        <tr key={rowIndex}>
+                        <tr
+                            key={rowIndex}
+                            className={rowIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'}
+                        >
                             {headers.map((header, colIndex) => (
                                 <td
                                     key={`${rowIndex}-${colIndex}`}
-                                    className="px-6 py-4 whitespace-nowrap text-sm"
+                                    className="px-4 py-3 whitespace-nowrap text-sm text-center text-gray-700 border border-gray-200"
                                 >
                                     {cleanValue(row[header])}
                                 </td>

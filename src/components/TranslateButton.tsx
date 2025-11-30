@@ -17,7 +17,7 @@ export const TranslateButton: React.FC<TranslateButtonProps> = ({ isTranslated, 
             title={isTranslated ? "Switch to English" : "Traduzir para Português"}
         >
             <Languages className={`h-4 w-4 ${isTranslated ? 'text-indigo-600' : 'text-gray-500'}`} />
-            {isTranslated ? 'PT-BR' : 'EN-US'}
+            {isTranslated ? 'Translated to Portuguese' : 'Translate to Portuguese'}
         </button>
     );
 };
