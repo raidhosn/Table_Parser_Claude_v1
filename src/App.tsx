@@ -355,10 +355,24 @@ const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDataLoaded
         }
     }, []);
 
-    const handleClose = () => {
+    const handleClose = useCallback(() => {
         resetState();
         onClose();
-    };
+    }, [resetState, onClose]);
+
+    // Handle Escape key to close modal
+    useEffect(() => {
+        if (!isOpen) return;
+
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && !isLoading) {
+                handleClose();
+            }
+        };
+
+        document.addEventListener('keydown', handleKeyDown);
+        return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [isOpen, isLoading, handleClose]);
 
     const handleFile = useCallback(async (file: File) => {
         setIsLoading(true);
@@ -620,40 +634,58 @@ const DataInputCard: React.FC<DataInputCardProps> = ({ onDataLoaded }) => {
 // -- Main Application Component --
 
 const App: React.FC = () => {
-    const [scriptsLoaded, setScriptsLoaded] = useState(false);
     const [rawInput, setRawInput] = useState<string>('');
     const [categorizedData, setCategorizedData] = useState<Record<string, TransformedRow[]> | null>(null);
     const [transformedData, setTransformedData] = useState<TransformedRow[] | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [unifiedView, setUnifiedView] = useState<'none' | 'full'>('none');
-    
-    // Dynamically load external scripts for parsing
+    const [scriptsReady, setScriptsReady] = useState(false);
+    const [scriptsWarning, setScriptsWarning] = useState<string | null>(null);
+
+    // Check if external scripts are loaded (they're included in index.html)
     useEffect(() => {
-        const loadScript = (src: string) => {
-            return new Promise<void>((resolve, reject) => {
-                if (document.querySelector(`script[src="${src}"]`)) {
-                    resolve();
-                    return;
-                }
-                const script = document.createElement('script');
-                script.src = src;
-                script.async = true;
-                script.onload = () => resolve();
-                script.onerror = () => reject(new Error(`Failed to load script: ${src}`));
-                document.head.appendChild(script);
-            });
+        const checkScripts = () => {
+            const xlsxLoaded = typeof XLSX !== 'undefined';
+            const mammothLoaded = typeof mammoth !== 'undefined';
+
+            if (xlsxLoaded && mammothLoaded) {
+                setScriptsReady(true);
+                return true;
+            }
+            return false;
         };
 
-        Promise.all([
-            loadScript('https://cdn.sheetjs.com/xlsx-latest/package/dist/xlsx.full.min.js'),
-            loadScript('https://unpkg.com/mammoth@1.6.0/mammoth.browser.min.js')
-        ]).then(() => {
-            setScriptsLoaded(true);
-        }).catch((err) => {
-            console.error("Failed to load dependencies", err);
-            // We still allow the app to load, buttons will just check for global presence
-            setScriptsLoaded(true);
-        });
+        // Check immediately
+        if (checkScripts()) return;
+
+        // If not ready, poll briefly (scripts may still be loading)
+        const interval = setInterval(() => {
+            if (checkScripts()) {
+                clearInterval(interval);
+            }
+        }, 100);
+
+        // Timeout after 5 seconds and allow app to function anyway
+        const timeout = setTimeout(() => {
+            clearInterval(interval);
+            setScriptsReady(true);
+
+            const xlsxLoaded = typeof XLSX !== 'undefined';
+            const mammothLoaded = typeof mammoth !== 'undefined';
+
+            if (!xlsxLoaded && !mammothLoaded) {
+                setScriptsWarning('Excel and Word file support unavailable. Paste data directly or use CSV/TSV files.');
+            } else if (!xlsxLoaded) {
+                setScriptsWarning('Excel file support unavailable. Use CSV/TSV files or paste data directly.');
+            } else if (!mammothLoaded) {
+                setScriptsWarning('Word document support unavailable. Use other file formats or paste data directly.');
+            }
+        }, 5000);
+
+        return () => {
+            clearInterval(interval);
+            clearTimeout(timeout);
+        };
     }, []);
 
     const handleTransform = useCallback(() => {
@@ -708,7 +740,9 @@ const App: React.FC = () => {
                     const get = (col: keyof Omit<TransformedRow, 'Original ID'>) => values[headerMap[col]]?.trim() || '';
 
                     let status = get('Status');
-                    if (status === 'Verification Successful') {
+                    if (status === 'Fulfillment Actions Completed') {
+                        status = 'Fulfilled';
+                    } else if (status === 'Verification Successful') {
                         status = 'Approved';
                     } else if (status === 'Abandoned') {
                         status = 'Backlogged';
@@ -958,7 +992,7 @@ const App: React.FC = () => {
         return null;
     };
 
-    if (!scriptsLoaded) {
+    if (!scriptsReady) {
         return (
             <div className="flex h-screen w-full items-center justify-center bg-gray-50">
                 <div className="text-center">
@@ -991,7 +1025,22 @@ const App: React.FC = () => {
                     )}
                 </div>
             </header>
-            
+
+            {scriptsWarning && (
+                <div className="bg-amber-50 border-b border-amber-200 px-4 py-3">
+                    <div className="container mx-auto flex items-center gap-2 text-amber-800 text-sm">
+                        <AlertCircle className="h-4 w-4 flex-shrink-0" />
+                        <span>{scriptsWarning}</span>
+                        <button
+                            onClick={() => setScriptsWarning(null)}
+                            className="ml-auto text-amber-600 hover:text-amber-800"
+                        >
+                            <X className="h-4 w-4" />
+                        </button>
+                    </div>
+                </div>
+            )}
+
             <main className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {!transformedData && <DataInputCard onDataLoaded={handleDataLoaded} />}
                 
@@ -1002,14 +1051,23 @@ const App: React.FC = () => {
                     <textarea
                         id="raw-input"
                         rows={transformedData ? 4 : 12}
-                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 border-transparent bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
+                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/30 focus:border-blue-400 bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
                         placeholder="Paste your TSV, CSV, or raw text data here..."
                         value={rawInput}
                         onChange={(e) => setRawInput(e.target.value)}
                     />
                     <div className="mt-4 flex justify-between items-center">
-                        <div className="text-xs text-gray-400 italic">
-                            {rawInput.length > 0 ? `${rawInput.split('\n').length} lines` : 'Ready for input'}
+                        <div className="text-xs text-gray-400 italic flex items-center gap-2">
+                            {rawInput.length > 0 ? (
+                                <>
+                                    <span>{rawInput.split('\n').length} lines</span>
+                                    {!transformedData && (
+                                        <span className="text-green-600 font-medium">- Ready to transform</span>
+                                    )}
+                                </>
+                            ) : (
+                                'Ready for input'
+                            )}
                         </div>
                         <div className="flex space-x-3">
                             {transformedData && unifiedView === 'none' && (
@@ -1020,9 +1078,24 @@ const App: React.FC = () => {
                                     View by IDs
                                 </button>
                             )}
+                            {transformedData && unifiedView === 'full' && (
+                                 <button
+                                    onClick={() => setUnifiedView('none')}
+                                    className="px-5 py-2.5 border border-blue-300 text-blue-700 font-semibold rounded-lg hover:bg-blue-50 hover:border-blue-400 focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-all shadow-sm"
+                                >
+                                    Standard View
+                                </button>
+                            )}
                             <button
                                 onClick={handleTransform}
-                                className="px-8 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md flex items-center gap-2"
+                                disabled={!rawInput.trim()}
+                                className={`px-8 py-2.5 font-semibold rounded-lg focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md flex items-center gap-2 ${
+                                    !rawInput.trim()
+                                        ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        : rawInput.trim() && !transformedData
+                                            ? 'bg-green-600 text-white hover:bg-green-700 animate-pulse'
+                                            : 'bg-blue-600 text-white hover:bg-blue-700'
+                                }`}
                             >
                                 {transformedData ? 'Re-Transform' : 'Transform Data'}
                             </button>
