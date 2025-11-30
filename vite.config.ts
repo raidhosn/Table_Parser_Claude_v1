@@ -1,8 +1,10 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  base: '/Table_Parser_Claude_v1/',
+  base: '/Table_Parser_Claude_v1/',  // <-- This is the fix
+  build: {
+    outDir: 'docs'
+  }
 })
