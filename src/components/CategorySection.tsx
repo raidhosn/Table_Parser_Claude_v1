@@ -4,7 +4,7 @@ import { DataTable } from './DataTable';
 import { ExcelExportButton } from './ExcelExportButton';
 import { TranslateButton } from './TranslateButton';
 import { CopyButton } from './CopyButton';
-import { finalHeaders as defaultHeaders, DICTIONARY } from '../utils/constants';
+import { finalHeaders as defaultHeaders, DICTIONARY, REQUEST_TYPE_CODES } from '../utils/constants';
 import { cleanValue } from '../utils/parser';
 
 interface CategorySectionProps {
@@ -24,10 +24,11 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 }) => {
     const [isOpen, setIsOpen] = React.useState(true);
 
+    // Compute visible headers based on requestTypeCode (language-agnostic)
     const visibleHeaders = useMemo(() => {
         if (data.length === 0) return headers;
         const firstRow = data[0];
-        const isZonal = firstRow.requestTypeCode === 'ZONAL_ENABLEMENT';
+        const isZonal = firstRow.requestTypeCode === REQUEST_TYPE_CODES.ZONAL_ENABLEMENT;
 
         return headers.filter(h => {
             if (h === 'Cores' && isZonal) return false;
@@ -82,7 +83,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                         filename={exportFilename}
                     />
                     <TranslateButton isTranslated={isTranslated} onToggle={onToggleTranslation} />
-                    <CopyButton headers={headers} data={data} />
+                    <CopyButton headers={visibleHeaders} data={data} />
                 </div>
             </div>
             {isOpen && (
