@@ -60,21 +60,23 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
     }, [categoryName, isTranslated]);
 
     return (
-        <div className="mb-6 bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden transition-all duration-300 hover:shadow-md">
+        <div className="mb-6 bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
             <div
-                className="p-5 bg-gray-50 border-b border-gray-200 flex justify-between items-center cursor-pointer select-none"
+                className="px-6 py-4 flex justify-between items-start cursor-pointer select-none"
                 onClick={() => setIsOpen(!isOpen)}
             >
-                <div className="flex items-center gap-3">
-                    <div className={`transform transition-transform duration-300 ${isOpen ? 'rotate-180' : ''}`}>
+                <div className="flex items-start gap-3">
+                    <div className={`transform transition-transform duration-300 mt-1 ${isOpen ? '' : '-rotate-90'}`}>
                         <ChevronDown className="h-5 w-5 text-gray-500" />
                     </div>
-                    <h3 className="text-lg font-bold text-gray-800 flex items-center gap-2">
-                        {categoryName}
-                        <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-                            {data.length}
-                        </span>
-                    </h3>
+                    <div>
+                        <h3 className="text-lg font-bold text-gray-800">
+                            {categoryName}
+                        </h3>
+                        <p className="text-sm text-gray-500">
+                            {data.length} rows found
+                        </p>
+                    </div>
                 </div>
                 <div className="flex gap-2" onClick={e => e.stopPropagation()}>
                     <ExcelExportButton
@@ -87,7 +89,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                 </div>
             </div>
             {isOpen && (
-                <div className="p-6 animate-in slide-in-from-top-2 duration-300">
+                <div className="px-6 pb-6 animate-in slide-in-from-top-2 duration-300">
                     <DataTable headers={displayHeaders} data={displayData} />
                 </div>
             )}

@@ -40,10 +40,10 @@ export const ExcelExportButton: React.FC<ExcelExportButtonProps> = ({ headers, d
     return (
         <button
             onClick={handleExport}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg font-medium hover:bg-green-700 transition-colors shadow-sm"
+            className="flex items-center gap-2 px-4 py-2 bg-white text-gray-700 border border-gray-300 rounded-lg font-medium hover:bg-gray-50 hover:border-gray-400 transition-colors"
         >
-            <Download className="h-4 w-4" />
-            Export Excel
+            <Download className="h-4 w-4 text-gray-500" />
+            Export
         </button>
     );
 };

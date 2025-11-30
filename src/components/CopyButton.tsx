@@ -140,8 +140,8 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
                 }`}
             title="Copy to Clipboard (Outlook/Excel compatible)"
         >
-            {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4" />}
-            {copied ? 'Copied!' : 'Copy'}
+            {copied ? <Check className="h-4 w-4" /> : <Clipboard className="h-4 w-4 text-gray-500" />}
+            {copied ? 'Copied!' : 'Copy Table'}
         </button>
     );
 };
