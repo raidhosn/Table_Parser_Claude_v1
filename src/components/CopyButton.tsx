@@ -10,8 +10,8 @@ interface CopyButtonProps {
 export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
     const [copied, setCopied] = useState(false);
 
-    const handleCopy = useCallback(() => {
-        // Create TSV content
+    const handleCopy = useCallback(async () => {
+        // Create TSV content for plain text
         const headerRow = headers.join('\t');
         const dataRows = data.map(row => {
             return headers.map(header => {
@@ -22,56 +22,50 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
 
         const tsvContent = `${headerRow}\n${dataRows}`;
 
-        // Create a temporary textarea to copy from (fallback)
-        const textArea = document.createElement("textarea");
-        textArea.value = tsvContent;
-        document.body.appendChild(textArea);
-        textArea.select();
+        // Create HTML table for Excel/rich text pasting
+        const htmlTable = `<table>
+            <thead>
+                <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
+            </thead>
+            <tbody>
+                ${data.map(row => `<tr>${headers.map(h => `<td>${cleanValue(row[h])}</td>`).join('')}</tr>`).join('')}
+            </tbody>
+        </table>`;
 
         try {
-            // Try modern API first
-            navigator.clipboard.writeText(tsvContent).then(() => {
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            }).catch(() => {
-                // Fallback to execCommand
+            // Try modern Clipboard API with both formats
+            if (navigator.clipboard && window.ClipboardItem) {
+                const clipboardItem = new ClipboardItem({
+                    'text/plain': new Blob([tsvContent], { type: 'text/plain' }),
+                    'text/html': new Blob([htmlTable], { type: 'text/html' })
+                });
+                await navigator.clipboard.write([clipboardItem]);
+            } else {
+                // Fallback: use execCommand with clipboard event listener
+                const listener = (e: ClipboardEvent) => {
+                    e.preventDefault();
+                    e.clipboardData?.setData('text/html', htmlTable);
+                    e.clipboardData?.setData('text/plain', tsvContent);
+                };
+
+                document.addEventListener('copy', listener);
                 document.execCommand('copy');
-                setCopied(true);
-                setTimeout(() => setCopied(false), 2000);
-            });
-        } catch (err) {
-            console.error('Failed to copy', err);
-            // Fallback
-            document.execCommand('copy');
+                document.removeEventListener('copy', listener);
+            }
+
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
+        } catch (err) {
+            console.error('Failed to copy:', err);
+            // Final fallback: just copy plain text
+            try {
+                await navigator.clipboard.writeText(tsvContent);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            } catch (fallbackErr) {
+                console.error('Fallback copy also failed:', fallbackErr);
+            }
         }
-
-        document.body.removeChild(textArea);
-
-        // Also try to copy as HTML table for Excel pasting support
-        const listener = (e: ClipboardEvent) => {
-            e.preventDefault();
-            const htmlTable = `
-                <table>
-                    <thead>
-                        <tr>${headers.map(h => `<th>${h}</th>`).join('')}</tr>
-                    </thead>
-                    <tbody>
-                        ${data.map(row => `
-                            <tr>${headers.map(h => `<td>${cleanValue(row[h])}</td>`).join('')}</tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            e.clipboardData?.setData('text/html', htmlTable);
-            e.clipboardData?.setData('text/plain', tsvContent);
-        };
-
-        document.addEventListener('copy', listener);
-        document.execCommand('copy');
-        document.removeEventListener('copy', listener);
-
     }, [headers, data]);
 
     return (

@@ -91,7 +91,7 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
                     <div className="flex items-center space-x-3">
                         <ExcelExportButton headers={displayHeaders} data={displayData} filename={exportFilename} />
                         <TranslateButton isTranslated={isTranslated} onToggle={() => setIsTranslated(!isTranslated)} />
-                        <CopyButton headers={finalHeaders} data={transformedData} />
+                        <CopyButton headers={displayHeaders} data={displayData} />
                     </div>
                 </div>
                 <DataTable headers={displayHeaders} data={displayData} />
@@ -178,7 +178,7 @@ export const UnifiedResultsView: React.FC<ResultsViewProps> = ({
                     <div className="flex items-center space-x-3">
                         <ExcelExportButton headers={displayHeaders} data={displayData} filename={exportFilename} />
                         <TranslateButton isTranslated={isTranslated} onToggle={() => setIsTranslated(!isTranslated)} />
-                        <CopyButton headers={headersWithRdQuota} data={unifiedDataWithRdQuota} />
+                        <CopyButton headers={displayHeaders} data={displayData} />
                     </div>
                 </div>
                 <DataTable headers={displayHeaders} data={displayData} />

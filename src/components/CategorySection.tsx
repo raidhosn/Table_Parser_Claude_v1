@@ -4,7 +4,7 @@ import { DataTable } from './DataTable';
 import { ExcelExportButton } from './ExcelExportButton';
 import { TranslateButton } from './TranslateButton';
 import { CopyButton } from './CopyButton';
-import { finalHeaders as defaultHeaders, DICTIONARY } from '../utils/constants';
+import { finalHeaders as defaultHeaders, DICTIONARY, NO_ZONE_REQUEST_TYPES } from '../utils/constants';
 import { cleanValue } from '../utils/parser';
 
 interface CategorySectionProps {
@@ -26,15 +26,19 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
 
     const visibleHeaders = useMemo(() => {
         if (data.length === 0) return headers;
-        const firstRow = data[0];
-        const isZonal = firstRow.requestTypeCode === 'ZONAL_ENABLEMENT';
+
+        // Determine if this category should hide Zone or Cores
+        // Zone is hidden for non-zonal request types (Quota Increase, Region Enablement, etc.)
+        // Cores is hidden for Zonal Enablement
+        const isZonalCategory = categoryName === 'Zonal Enablement';
+        const shouldHideZone = NO_ZONE_REQUEST_TYPES.includes(categoryName);
 
         return headers.filter(h => {
-            if (h === 'Cores' && isZonal) return false;
-            if (h === 'Zone' && !isZonal) return false;
+            if (h === 'Cores' && isZonalCategory) return false;
+            if (h === 'Zone' && shouldHideZone) return false;
             return true;
         });
-    }, [data, headers]) as string[];
+    }, [data, headers, categoryName]) as string[];
 
     const displayHeaders = useMemo(() => visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h), [visibleHeaders, isTranslated]);
 
@@ -82,7 +86,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                         filename={exportFilename}
                     />
                     <TranslateButton isTranslated={isTranslated} onToggle={onToggleTranslation} />
-                    <CopyButton headers={headers} data={data} />
+                    <CopyButton headers={displayHeaders} data={displayData} />
                 </div>
             </div>
             {isOpen && (

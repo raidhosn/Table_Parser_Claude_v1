@@ -113,7 +113,7 @@ const App: React.FC = () => {
                     <textarea
                         id="raw-input"
                         rows={transformedData ? 4 : 12}
-                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 border-transparent bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
+                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
                         placeholder="Paste your TSV, CSV, or raw text data here..."
                         value={rawInput}
                         onChange={(e) => setRawInput(e.target.value)}
@@ -135,16 +135,16 @@ const App: React.FC = () => {
                             {transformedData && (
                                 <button
                                     onClick={() => setUnifiedView(unifiedView === 'none' ? 'full' : 'none')}
-                                    className={`px-5 py-2.5 border border-gray-300 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all shadow-sm ${unifiedView === 'full' ? 'bg-gray-100' : 'text-gray-700'}`}
+                                    className={`px-5 py-2.5 border font-semibold rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all shadow-sm ${unifiedView === 'full' ? 'bg-blue-50 text-blue-700 border-blue-300' : 'text-gray-700 border-gray-300 hover:border-gray-400'}`}
                                 >
-                                    View by IDs
+                                    {unifiedView === 'full' ? 'Hide IDs' : 'View by IDs'}
                                 </button>
                             )}
                             <button
                                 onClick={handleTransform}
                                 className="px-8 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md flex items-center gap-2"
                             >
-                                {transformedData ? 'Transform Data' : 'Transform Data'}
+                                {transformedData ? 'Re-Transform' : 'Transform Data'}
                             </button>
                         </div>
                     </div>

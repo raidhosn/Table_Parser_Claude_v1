@@ -24,6 +24,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
         setWorkbook(null);
         setSheetNames([]);
         setError(null);
+        setIsLoading(false);
         onClose();
     };
 
@@ -36,22 +37,36 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const text = e.target?.result as string;
+                    setIsLoading(false);
                     onDataLoaded(text);
+                };
+                reader.onerror = () => {
+                    setError("Failed to read the file.");
+                    setIsLoading(false);
                 };
                 reader.readAsText(file);
             } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const data = new Uint8Array(e.target?.result as ArrayBuffer);
-                    const wb = XLSX.read(data, { type: 'array' });
-                    setWorkbook(wb);
-                    setSheetNames(wb.SheetNames);
-                    if (wb.SheetNames.length === 1) {
-                        // Auto-select if only one sheet
-                        const ws = wb.Sheets[wb.SheetNames[0]];
-                        const csv = XLSX.utils.sheet_to_csv(ws);
-                        onDataLoaded(csv);
+                    try {
+                        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                        const wb = XLSX.read(data, { type: 'array' });
+                        setWorkbook(wb);
+                        setSheetNames(wb.SheetNames);
+                        setIsLoading(false);
+                        if (wb.SheetNames.length === 1) {
+                            // Auto-select if only one sheet
+                            const ws = wb.Sheets[wb.SheetNames[0]];
+                            const csv = XLSX.utils.sheet_to_csv(ws);
+                            onDataLoaded(csv);
+                        }
+                    } catch (parseErr) {
+                        setError("Failed to parse Excel file.");
+                        setIsLoading(false);
                     }
+                };
+                reader.onerror = () => {
+                    setError("Failed to read the Excel file.");
                     setIsLoading(false);
                 };
                 reader.readAsArrayBuffer(file);
@@ -63,16 +78,20 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
                         const result = await mammoth.convertToHtml({ arrayBuffer });
                         const html = result.value;
                         const tsv = parseHtmlTable(html);
+                        setIsLoading(false);
                         if (tsv) {
                             onDataLoaded(tsv);
                         } else {
                             setError("No table found in the Word document.");
-                            setIsLoading(false);
                         }
                     } catch (err) {
                         setError("Failed to parse Word document.");
                         setIsLoading(false);
                     }
+                };
+                reader.onerror = () => {
+                    setError("Failed to read the Word document.");
+                    setIsLoading(false);
                 };
                 reader.readAsArrayBuffer(file);
             } else if (file.name.endsWith('.html') || file.name.endsWith('.htm')) {
@@ -80,12 +99,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
                 reader.onload = (e) => {
                     const html = e.target?.result as string;
                     const tsv = parseHtmlTable(html);
+                    setIsLoading(false);
                     if (tsv) {
                         onDataLoaded(tsv);
                     } else {
                         setError("No table found in the HTML file.");
-                        setIsLoading(false);
                     }
+                };
+                reader.onerror = () => {
+                    setError("Failed to read the HTML file.");
+                    setIsLoading(false);
                 };
                 reader.readAsText(file);
             } else {
