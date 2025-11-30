@@ -8,15 +8,16 @@ interface CopyButtonProps {
 }
 
 /**
- * Generates an HTML table with inline styles optimized for Outlook/Word/Teams pasting.
- * Uses Calibri Light font at 11px with a dark theme matching the screenshot.
+ * Generates an HTML table with inline styles for clipboard export.
+ * Uses border-collapse, 1px solid borders, 8px padding, and center text alignment.
  */
 const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[]): string => {
-    // Common inline styles
-    const fontStyle = "font-family: 'Calibri Light', Calibri, sans-serif; font-size: 11pt;";
-    const tableStyle = `border-collapse: collapse; border-spacing: 0; ${fontStyle}`;
-    const headerCellStyle = `background-color: #3c3c3c; color: #ffffff; padding: 2px 6px; border: 1px solid #d4d4d4; text-align: left; font-weight: 600; ${fontStyle}`;
-    const bodyCellStyle = `background-color: #262626; color: #ffffff; padding: 2px 6px; border: 1px solid #d4d4d4; text-align: left; ${fontStyle}`;
+    // Table style with border-collapse
+    const tableStyle = "border-collapse: collapse;";
+    // Header cells: 1px solid border, 8px padding, center aligned
+    const headerCellStyle = "border: 1px solid #000000; padding: 8px; text-align: center; font-weight: bold;";
+    // Body cells: 1px solid border, 8px padding, center aligned
+    const bodyCellStyle = "border: 1px solid #000000; padding: 8px; text-align: center;";
 
     // Generate header row
     const headerCells = headers
