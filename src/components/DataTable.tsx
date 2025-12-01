@@ -8,21 +8,24 @@ interface DataTableProps {
 
 export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
     const columnCount = headers.length;
-    const columnWidth = `${100 / columnCount}%`;
+    // First column (usually Subscription ID) is wider at 30%, rest distributed equally
+    const getColumnWidth = (index: number) => {
+        if (columnCount <= 1) return '100%';
+        if (index === 0) return '30%';
+        return `${70 / (columnCount - 1)}%`;
+    };
 
     return (
-        <div className="w-full overflow-x-auto">
-            <table className="w-full table-fixed">
+        <div className="w-full bg-white rounded-lg border border-gray-200 overflow-hidden">
+            <table className="w-full table-fixed border-collapse">
                 <thead>
-                    <tr className="bg-[#1e2a4a] rounded-t-lg">
+                    <tr className="bg-[#1a2744] border-l-4 border-l-blue-500">
                         {headers.map((header, index) => (
                             <th
                                 key={index}
                                 scope="col"
-                                style={{ width: columnWidth }}
-                                className={`px-6 py-4 text-left text-xs font-semibold text-white uppercase tracking-wider whitespace-nowrap ${
-                                    index === 0 ? 'rounded-tl-lg' : ''
-                                } ${index === headers.length - 1 ? 'rounded-tr-lg' : ''}`}
+                                style={{ width: getColumnWidth(index) }}
+                                className="px-4 py-3.5 text-center text-[13px] font-semibold text-white uppercase tracking-wider whitespace-nowrap"
                             >
                                 {header}
                             </th>
@@ -33,13 +36,13 @@ export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
                     {data.map((row, rowIndex) => (
                         <tr
                             key={rowIndex}
-                            className={rowIndex !== data.length - 1 ? 'border-b border-gray-200' : ''}
+                            className={`bg-white ${rowIndex !== data.length - 1 ? 'border-b border-gray-200' : ''}`}
                         >
                             {headers.map((header, colIndex) => (
                                 <td
                                     key={`${rowIndex}-${colIndex}`}
-                                    style={{ width: columnWidth }}
-                                    className="px-6 py-4 whitespace-nowrap text-sm text-gray-700"
+                                    style={{ width: getColumnWidth(colIndex) }}
+                                    className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700 text-center"
                                 >
                                     {cleanValue(row[header])}
                                 </td>
