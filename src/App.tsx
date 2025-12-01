@@ -48,6 +48,7 @@ const App: React.FC = () => {
         setTransformedData(null);
         setError(null);
         setUnifiedView('none');
+        setIsTranslated(false);
     };
 
     const renderResults = () => {

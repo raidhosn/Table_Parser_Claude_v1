@@ -172,11 +172,6 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
         const currentHeaders = headersRef.current;
         const currentData = dataRef.current;
 
-        // Debug: Log what we're copying to help diagnose translation issues
-        console.log('[CopyButton] Copying with headers:', currentHeaders);
-        console.log('[CopyButton] First row data keys:', currentData.length > 0 ? Object.keys(currentData[0]) : 'no data');
-        console.log('[CopyButton] First row sample:', currentData.length > 0 ? currentData[0] : 'no data');
-
         const tsvContent = generateTsvContent(currentHeaders, currentData);
         const htmlContent = generateStyledHtmlTable(currentHeaders, currentData);
 

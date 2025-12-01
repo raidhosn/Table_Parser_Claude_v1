@@ -33,9 +33,7 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
     // Translate headers for display when Portuguese is active
     // Used by: DataTable (display), CopyButton (clipboard), ExcelExportButton (export)
     const displayHeaders = useMemo(() => {
-        const result = visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
-        console.log('[CategorizedResultsView] isTranslated=', isTranslated, 'displayHeaders:', result);
-        return result;
+        return visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
     }, [visibleHeaders, isTranslated]);
 
     // Translate both row keys (to match displayHeaders) and cell values for display
@@ -133,9 +131,7 @@ export const UnifiedResultsView: React.FC<ResultsViewProps> = ({
     // Translate headers for display when Portuguese is active
     // Used by: DataTable (display), CopyButton (clipboard), ExcelExportButton (export)
     const displayHeaders = useMemo(() => {
-        const result = headersWithRdQuota.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
-        console.log('[UnifiedResultsView] isTranslated=', isTranslated, 'displayHeaders:', result);
-        return result;
+        return headersWithRdQuota.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
     }, [headersWithRdQuota, isTranslated]);
 
     // Translate both row keys (to match displayHeaders) and cell values for display
@@ -164,15 +160,15 @@ export const UnifiedResultsView: React.FC<ResultsViewProps> = ({
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
                     <p className="text-3xl font-bold text-blue-600">{transformedData.length}</p>
-                    <p className="text-sm font-medium text-gray-500">Total Rows</p>
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Total Rows</p>
                 </div>
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
                     <p className="text-3xl font-bold text-purple-600">{Object.keys(categorizedData).length}</p>
-                    <p className="text-sm font-medium text-gray-500">Categories</p>
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Categories</p>
                 </div>
                 <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-200 text-center">
                     <p className="text-3xl font-bold text-emerald-600">{headersWithRdQuota.length}</p>
-                    <p className="text-sm font-medium text-gray-500">Columns</p>
+                    <p className="text-sm font-medium text-gray-500 uppercase tracking-wide mt-1">Columns</p>
                 </div>
             </div>
 

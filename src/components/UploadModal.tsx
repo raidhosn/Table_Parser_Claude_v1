@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { X, Upload, FileSpreadsheet, AlertCircle, Loader2 } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
@@ -17,6 +17,17 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
     const [workbook, setWorkbook] = useState<XLSX.WorkBook | null>(null);
     const [sheetNames, setSheetNames] = useState<string[]>([]);
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Reset internal state when modal closes
+    useEffect(() => {
+        if (!isOpen) {
+            setWorkbook(null);
+            setSheetNames([]);
+            setError(null);
+            setIsLoading(false);
+            setIsDragging(false);
+        }
+    }, [isOpen]);
 
     if (!isOpen) return null;
 
@@ -130,6 +141,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
         if (!workbook) return;
         const ws = workbook.Sheets[sheetName];
         const csv = XLSX.utils.sheet_to_csv(ws);
+        // Reset internal state before calling onDataLoaded to ensure clean state on next open
+        setWorkbook(null);
+        setSheetNames([]);
+        setError(null);
         onDataLoaded(csv);
     };
 
@@ -145,6 +160,8 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
         if (e.target.files && e.target.files[0]) {
             processFile(e.target.files[0]);
         }
+        // Reset file input to allow selecting the same file again
+        e.target.value = '';
     };
 
     const triggerFileSelect = () => fileInputRef.current?.click();
