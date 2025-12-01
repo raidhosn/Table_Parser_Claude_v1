@@ -24,6 +24,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
         setWorkbook(null);
         setSheetNames([]);
         setError(null);
+        setIsLoading(false);
         onClose();
     };
 

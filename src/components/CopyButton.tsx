@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Clipboard, Check } from 'lucide-react';
 import { cleanValue } from '../utils/parser';
 
@@ -85,8 +85,11 @@ const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[])
 
 /**
  * Escapes HTML special characters to prevent XSS and ensure proper rendering.
+ * Handles non-string inputs by converting them to strings first.
  */
-const escapeHtml = (text: string): string => {
+const escapeHtml = (value: any): string => {
+    if (value === undefined || value === null) return '';
+    const text = String(value);
     const htmlEscapes: Record<string, string> = {
         '&': '&amp;',
         '<': '&lt;',
@@ -110,6 +113,16 @@ const generateTsvContent = (headers: string[], data: Record<string, any>[]): str
 
 export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
     const [copied, setCopied] = useState(false);
+    const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+    // Cleanup timeout on unmount to prevent state updates on unmounted component
+    useEffect(() => {
+        return () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleCopy = useCallback(async () => {
         const tsvContent = generateTsvContent(headers, data);
@@ -117,7 +130,11 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
 
         const showCopiedFeedback = () => {
             setCopied(true);
-            setTimeout(() => setCopied(false), 2000);
+            // Clear any existing timeout before setting a new one
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+            }
+            timeoutRef.current = setTimeout(() => setCopied(false), 2000);
         };
 
         // Try the async Clipboard API with both formats
