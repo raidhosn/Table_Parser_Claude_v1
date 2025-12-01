@@ -40,15 +40,16 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
     // Translate headers for display when Portuguese is active
     // Used by: DataTable (display), CopyButton (clipboard), ExcelExportButton (export)
     const displayHeaders = useMemo(() => {
-        const result = visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
-        console.log(`[CategorySection:${categoryName}] isTranslated=${isTranslated}, displayHeaders:`, result);
-        return result;
-    }, [visibleHeaders, isTranslated, categoryName]);
+        return visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
+    }, [visibleHeaders, isTranslated]);
 
     // Translate both row keys (to match displayHeaders) and cell values for display
     // This ensures Copy/Export operations use the exact data shown in the UI
     const displayData = useMemo(() => data.map(row => {
-        const newRow: Record<string, any> = { 'Original ID': row['Original ID'] };
+        const newRow: Record<string, any> = {
+            'Original ID': row['Original ID'],
+            requestTypeCode: row.requestTypeCode
+        };
         visibleHeaders.forEach(h => {
             const translatedKey = isTranslated ? (DICTIONARY[h] || h) : h;
             let val = (row as any)[h];
