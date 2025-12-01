@@ -28,7 +28,7 @@ export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
                                     borderTopLeftRadius: index === 0 ? '8px' : '0',
                                     borderTopRightRadius: index === columnCount - 1 ? '8px' : '0'
                                 }}
-                                className="px-5 py-4 text-center text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
+                                className="px-5 py-4 text-center align-middle text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
                             >
                                 {header}
                             </th>
@@ -45,7 +45,7 @@ export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
                                 <td
                                     key={`${rowIndex}-${colIndex}`}
                                     style={{ width: getColumnWidth() }}
-                                    className="px-5 py-4 whitespace-nowrap text-sm text-gray-700 text-center"
+                                    className="px-5 py-4 whitespace-nowrap text-sm text-gray-700 text-center align-middle"
                                 >
                                     {cleanValue(row[header])}
                                 </td>
