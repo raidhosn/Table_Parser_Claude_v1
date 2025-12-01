@@ -37,22 +37,38 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
                 const reader = new FileReader();
                 reader.onload = (e) => {
                     const text = e.target?.result as string;
+                    setIsLoading(false);
                     onDataLoaded(text);
+                };
+                reader.onerror = () => {
+                    setError("Failed to read the file.");
+                    setIsLoading(false);
                 };
                 reader.readAsText(file);
             } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
                 const reader = new FileReader();
                 reader.onload = (e) => {
-                    const data = new Uint8Array(e.target?.result as ArrayBuffer);
-                    const wb = XLSX.read(data, { type: 'array' });
-                    setWorkbook(wb);
-                    setSheetNames(wb.SheetNames);
-                    if (wb.SheetNames.length === 1) {
-                        // Auto-select if only one sheet
-                        const ws = wb.Sheets[wb.SheetNames[0]];
-                        const csv = XLSX.utils.sheet_to_csv(ws);
-                        onDataLoaded(csv);
+                    try {
+                        const data = new Uint8Array(e.target?.result as ArrayBuffer);
+                        const wb = XLSX.read(data, { type: 'array' });
+                        setWorkbook(wb);
+                        setSheetNames(wb.SheetNames);
+                        if (wb.SheetNames.length === 1) {
+                            // Auto-select if only one sheet
+                            const ws = wb.Sheets[wb.SheetNames[0]];
+                            const csv = XLSX.utils.sheet_to_csv(ws);
+                            setIsLoading(false);
+                            onDataLoaded(csv);
+                        } else {
+                            setIsLoading(false);
+                        }
+                    } catch (err) {
+                        setError("Failed to parse Excel file.");
+                        setIsLoading(false);
                     }
+                };
+                reader.onerror = () => {
+                    setError("Failed to read the Excel file.");
                     setIsLoading(false);
                 };
                 reader.readAsArrayBuffer(file);
@@ -65,6 +81,7 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
                         const html = result.value;
                         const tsv = parseHtmlTable(html);
                         if (tsv) {
+                            setIsLoading(false);
                             onDataLoaded(tsv);
                         } else {
                             setError("No table found in the Word document.");
@@ -75,6 +92,10 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
                         setIsLoading(false);
                     }
                 };
+                reader.onerror = () => {
+                    setError("Failed to read the Word document.");
+                    setIsLoading(false);
+                };
                 reader.readAsArrayBuffer(file);
             } else if (file.name.endsWith('.html') || file.name.endsWith('.htm')) {
                 const reader = new FileReader();
@@ -82,11 +103,16 @@ export const UploadModal: React.FC<UploadModalProps> = ({ isOpen, onClose, onDat
                     const html = e.target?.result as string;
                     const tsv = parseHtmlTable(html);
                     if (tsv) {
+                        setIsLoading(false);
                         onDataLoaded(tsv);
                     } else {
                         setError("No table found in the HTML file.");
                         setIsLoading(false);
                     }
+                };
+                reader.onerror = () => {
+                    setError("Failed to read the HTML file.");
+                    setIsLoading(false);
                 };
                 reader.readAsText(file);
             } else {

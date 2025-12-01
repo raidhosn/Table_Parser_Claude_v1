@@ -117,6 +117,7 @@ export const DICTIONARY: Record<string, string> = {
     'Quota Decrease': 'Diminuição de Cota',
     'Region Limit Increase': 'Aumento de Limite Regional',
     'Reserved Instances': 'Instâncias Reservadas',
+    'Unknown': 'Desconhecido',
 
     // Statuses
     'Approved': 'Aprovado',
@@ -124,7 +125,14 @@ export const DICTIONARY: Record<string, string> = {
     'Backlogged': 'Pendente (Backlogged)',
     'Pending Customer Response': 'Aguardando Resposta do Cliente',
     'Pending': 'Pendente',
+    'In Progress': 'Em Andamento',
+    'Rejected': 'Rejeitado',
+    'Cancelled': 'Cancelado',
+
+    // Additional Headers
+    'Original ID': 'ID Original',
 
     // Common Values
-    'N/A': 'N/A'
+    'N/A': 'N/A',
+    '': ''
 };
