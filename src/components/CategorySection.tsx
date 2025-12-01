@@ -83,7 +83,7 @@ export const CategorySection: React.FC<CategorySectionProps> = ({
                         filename={exportFilename}
                     />
                     <TranslateButton isTranslated={isTranslated} onToggle={onToggleTranslation} />
-                    <CopyButton headers={visibleHeaders} data={data} />
+                    <CopyButton headers={displayHeaders} data={displayData} />
                 </div>
             </div>
             {isOpen && (
