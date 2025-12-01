@@ -39,6 +39,7 @@ const App: React.FC = () => {
         setTransformedData(null);
         setError(null);
         setUnifiedView('none');
+        setIsTranslated(false);
     };
 
     const handleDataLoaded = (data: string) => {
@@ -135,9 +136,9 @@ const App: React.FC = () => {
                             {transformedData && (
                                 <button
                                     onClick={() => setUnifiedView(unifiedView === 'none' ? 'full' : 'none')}
-                                    className={`px-5 py-2.5 border border-gray-300 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all shadow-sm ${unifiedView === 'full' ? 'bg-gray-100' : 'text-gray-700'}`}
+                                    className={`px-5 py-2.5 border border-gray-300 font-semibold rounded-lg hover:bg-gray-50 hover:border-gray-400 focus:ring-2 focus:ring-offset-2 focus:ring-gray-500 transition-all shadow-sm ${unifiedView === 'full' ? 'bg-gray-100 text-gray-700' : 'text-gray-700'}`}
                                 >
-                                    View by IDs
+                                    {unifiedView === 'full' ? 'View by Category' : 'View by IDs'}
                                 </button>
                             )}
                             <button

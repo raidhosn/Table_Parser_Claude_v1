@@ -68,9 +68,10 @@ export const parseHtmlTable = (htmlString: string): string => {
     }).join('\n');
 };
 
-const detectSeparator = (lines: string[]): string | RegExp => {
+const detectSeparator = (lines: string[]): string => {
     let maxCommas = 0;
     let maxTabs = 0;
+    let maxSemicolons = 0;
     // Scan up to first 20 lines to detect separator
     const scanLimit = Math.min(lines.length, 20);
 
@@ -78,15 +79,25 @@ const detectSeparator = (lines: string[]): string | RegExp => {
         const line = lines[i];
         const commas = (line.match(/,/g) || []).length;
         const tabs = (line.match(/\t/g) || []).length;
+        const semicolons = (line.match(/;/g) || []).length;
         maxCommas = Math.max(maxCommas, commas);
         maxTabs = Math.max(maxTabs, tabs);
+        maxSemicolons = Math.max(maxSemicolons, semicolons);
     }
 
-    if (maxTabs === 0 && maxCommas === 0) {
-        return /\s+/; // Fallback to whitespace if no clear separator
+    // Prioritize tab over comma, comma over semicolon
+    if (maxTabs >= maxCommas && maxTabs >= maxSemicolons && maxTabs > 0) {
+        return '\t';
+    }
+    if (maxCommas >= maxSemicolons && maxCommas > 0) {
+        return ',';
+    }
+    if (maxSemicolons > 0) {
+        return ';';
     }
 
-    return maxTabs > maxCommas ? '\t' : ',';
+    // Default to tab if no clear separator found (most common for pasted data)
+    return '\t';
 };
 
 const legacyHeaderDetection = (rows: string[][]): HeaderInfo => {
@@ -209,23 +220,33 @@ export const transformData = (rawInput: string): { transformed: TransformedRow[]
                 status = 'Backlogged';
             } else if (status === '-') {
                 status = 'Pending Customer Response';
+            } else if (status === 'Fulfillment Actions Completed') {
+                status = 'Fulfilled';
             }
 
             // Map display Request Type to internal requestTypeCode
-            const requestType = getVal('Request Type');
+            const requestType = getVal('Request Type') || 'Unknown';
             const requestTypeCode = mapDisplayTypeToCode(requestType);
+
+            // Try to get Original ID from data, fallback to generated ID
+            const originalIdIdx = findColIndex(['Original ID', 'ID', 'RDQuota']);
+            const originalId = originalIdIdx !== -1 ? values[originalIdIdx]?.trim() || `pre-transformed-${index}` : `pre-transformed-${index}`;
 
             return {
                 'Subscription ID': getVal('Subscription ID'),
                 'Request Type': requestType,
                 'VM Type': getVal('VM Type'),
                 'Region': cleanRegion(getVal('Region')),
-                'Zone': getVal('Zone'),
+                'Zone': getVal('Zone') || 'N/A',
                 'Cores': getVal('Cores'),
-                'Status': status,
-                'Original ID': `pre-transformed-${index}`,
+                'Status': status || 'Pending',
+                'Original ID': originalId,
                 requestTypeCode,
             };
+        }).filter(row => {
+            // Filter out rows that are effectively empty
+            const hasData = row['Subscription ID'] || row['VM Type'] || row['Region'];
+            return hasData;
         });
     } else {
         const idIndex = findColIndex(["ID", "RDQuota", "id", "rdquota", "QuotaId"]);
