@@ -2,8 +2,23 @@ import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Clipboard, Check } from 'lucide-react';
 import { cleanValue } from '../utils/parser';
 
+/**
+ * Props for CopyButton component.
+ *
+ * IMPORTANT: Language/Translation Support
+ * The CopyButton expects to receive ALREADY TRANSLATED headers and data.
+ * Translation is handled by parent components (ResultsView, CategorySection) which:
+ * 1. Detect language state via `isTranslated` boolean
+ * 2. Apply DICTIONARY translations to both headers and cell values
+ * 3. Pass the translated `displayHeaders` and `displayData` as props
+ *
+ * This ensures the copied content (both TSV and HTML formats) exactly matches
+ * what the user sees in the UI, respecting the current language selection.
+ */
 interface CopyButtonProps {
+    /** Column headers - should be pre-translated if language is Portuguese */
     headers: string[];
+    /** Row data with keys matching headers - should be pre-translated if language is Portuguese */
     data: Record<string, any>[];
 }
 
@@ -116,6 +131,18 @@ const generateTsvContent = (headers: string[], data: Record<string, any>[]): str
     return `${headerRow}\n${dataRows}`;
 };
 
+/**
+ * CopyButton Component
+ *
+ * Copies table data to clipboard in both TSV (text/plain) and HTML (text/html) formats.
+ * - TSV format: Tab-separated values for Excel/Google Sheets compatibility
+ * - HTML format: Styled table for Word/Outlook compatibility with enterprise styling
+ *
+ * LANGUAGE SUPPORT: This component respects the current language selection (EN/PT).
+ * The headers and data props should be pre-translated by parent components.
+ * When Portuguese is active, all copied content (headers, labels, cell values)
+ * will match exactly what the user sees in the UI.
+ */
 export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
     const [copied, setCopied] = useState(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
