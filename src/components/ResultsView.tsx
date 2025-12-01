@@ -30,11 +30,15 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
         [finalHeaders, transformedData]
     );
 
+    // Translate headers for display when Portuguese is active
+    // Used by: DataTable (display), CopyButton (clipboard), ExcelExportButton (export)
     const displayHeaders = useMemo(() =>
         visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h),
         [visibleHeaders, isTranslated]
     );
 
+    // Translate both row keys (to match displayHeaders) and cell values for display
+    // This ensures Copy/Export operations use the exact data shown in the UI
     const displayData = useMemo(() => transformedData.map(row => {
         const newRow: Record<string, any> = { 'Original ID': row['Original ID'], requestTypeCode: row.requestTypeCode };
         visibleHeaders.forEach(h => {
@@ -125,8 +129,12 @@ export const UnifiedResultsView: React.FC<ResultsViewProps> = ({
     const headersWithRdQuota = useMemo(() => ['RDQuota', ...visibleBaseHeaders], [visibleBaseHeaders]);
     const unifiedDataWithRdQuota = useMemo(() => transformedData.map(row => ({ ...row, RDQuota: row['Original ID'] })), [transformedData]);
 
+    // Translate headers for display when Portuguese is active
+    // Used by: DataTable (display), CopyButton (clipboard), ExcelExportButton (export)
     const displayHeaders = useMemo(() => headersWithRdQuota.map(h => isTranslated ? (DICTIONARY[h] || h) : h), [headersWithRdQuota, isTranslated]);
 
+    // Translate both row keys (to match displayHeaders) and cell values for display
+    // This ensures Copy/Export operations use the exact data shown in the UI
     const displayData = useMemo(() => unifiedDataWithRdQuota.map(row => {
         const newRow: Record<string, any> = { 'Original ID': row['Original ID'], requestTypeCode: row.requestTypeCode };
         headersWithRdQuota.forEach(h => {
