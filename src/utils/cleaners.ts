@@ -5,6 +5,6 @@ export const cleanRegion = (region: string): string => {
 };
 
 export const cleanVmType = (value: string): string => {
-    if (!value) return value;
+    if (!value) return '';
     return value.replace(/\(XIO\)/gi, "").trim();
 };

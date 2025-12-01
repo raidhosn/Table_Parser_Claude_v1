@@ -113,7 +113,7 @@ const App: React.FC = () => {
                     <textarea
                         id="raw-input"
                         rows={transformedData ? 4 : 12}
-                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-0 border-transparent bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
+                        className="w-full p-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-400 bg-gray-50 focus:bg-white transition-all duration-200 font-mono text-sm text-gray-800 resize-y"
                         placeholder="Paste your TSV, CSV, or raw text data here..."
                         value={rawInput}
                         onChange={(e) => setRawInput(e.target.value)}
@@ -144,7 +144,7 @@ const App: React.FC = () => {
                                 onClick={handleTransform}
                                 className="px-8 py-2.5 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500/30 transition-all shadow-md flex items-center gap-2"
                             >
-                                {transformedData ? 'Transform Data' : 'Transform Data'}
+                                Transform Data
                             </button>
                         </div>
                     </div>
