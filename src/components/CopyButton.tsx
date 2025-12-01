@@ -8,62 +8,66 @@ interface CopyButtonProps {
 }
 
 /**
- * Generates an HTML table for clipboard export that matches the UI styling.
- * Styled for Word/Outlook compatibility with:
- * - Dark navy header row (#1e2a3a)
- * - Bold uppercase column titles in white
- * - Evenly spaced columns with consistent row height
- * - Clean white rows with subtle horizontal separators
- * - Center-aligned text (horizontal + vertical) for all cells
- * - AutoFit to Contents when pasted into Word
+ * Generates an HTML table for clipboard export with Enterprise styling.
+ * Optimized for Word/Outlook compatibility with inline styles only:
+ * - Dark navy header row (#1e2a3a) with bold uppercase white text
+ * - Clean white rows with subtle gray borders (#d4d4d4)
+ * - Tight, clean grid with consistent padding (2px 6px)
+ * - 'Calibri Light' font family at 11pt for professional appearance
+ * - Center-aligned text for all cells
+ * - border-collapse: collapse with border-spacing: 0 for tight grid
  * Applies inline styles to EVERY cell individually to ensure persistence in Word/Outlook.
  */
 const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[]): string => {
-    // Table style - auto layout for Word AutoFit to Contents
+    // Table style - tight grid with no spacing for Word compatibility
     const tableStyle = [
         "border-collapse: collapse",
+        "border-spacing: 0",
         "table-layout: auto",
         "width: auto",
-        "font-family: Calibri, Arial, sans-serif",
+        "font-family: 'Calibri Light', Calibri, sans-serif",
         "font-size: 11pt",
         "mso-table-lspace: 0pt",
-        "mso-table-rspace: 0pt"
+        "mso-table-rspace: 0pt",
+        "margin: 0",
+        "padding: 0"
     ].join("; ");
 
     // Header row style - dark navy background
     const headerRowStyle = "background-color: #1e2a3a";
 
-    // Header cell style - white uppercase bold text, center-aligned with padding
+    // Header cell style - white uppercase bold text, center-aligned with tight padding
     const headerCellStyle = [
         "background-color: #1e2a3a",
         "color: #ffffff",
+        "font-family: 'Calibri Light', Calibri, sans-serif",
         "font-weight: bold",
         "text-transform: uppercase",
-        "font-size: 10pt",
-        "letter-spacing: 0.5pt",
-        "padding: 12pt 15pt",
+        "font-size: 11pt",
+        "padding: 2px 6px",
         "text-align: center",
         "vertical-align: middle",
-        "border: none",
-        "border-bottom: 1px solid #1e2a3a",
-        "white-space: nowrap"
+        "border: 1px solid #d4d4d4",
+        "white-space: nowrap",
+        "mso-border-alt: solid #d4d4d4 .5pt"
     ].join("; ");
 
     // Data row style - white background
     const dataRowStyle = "background-color: #ffffff";
 
-    // Data cell style - gray text, center-aligned with subtle bottom border
+    // Data cell style - dark text, center-aligned with consistent borders
     const dataCellStyle = [
         "background-color: #ffffff",
         "color: #374151",
+        "font-family: 'Calibri Light', Calibri, sans-serif",
         "font-weight: normal",
         "font-size: 11pt",
-        "padding: 12pt 15pt",
+        "padding: 2px 6px",
         "text-align: center",
         "vertical-align: middle",
-        "border: none",
-        "border-bottom: 1px solid #e8e8e8",
-        "white-space: nowrap"
+        "border: 1px solid #d4d4d4",
+        "white-space: nowrap",
+        "mso-border-alt: solid #d4d4d4 .5pt"
     ].join("; ");
 
     // Generate header row with styled cells
