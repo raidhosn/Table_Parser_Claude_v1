@@ -100,7 +100,8 @@ const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[])
         })
         .join('');
 
-    return `<table style="${tableStyle}"><thead><tr style="${headerRowStyle}">${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    // Include meta charset for proper Portuguese character encoding in Word/Outlook
+    return `<html><head><meta charset="UTF-8"></head><body><table style="${tableStyle}"><thead><tr style="${headerRowStyle}">${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table></body></html>`;
 };
 
 /**
@@ -147,6 +148,16 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
     const [copied, setCopied] = useState(false);
     const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+    // Use refs to always access the latest props - fixes potential stale closure issues
+    const headersRef = useRef(headers);
+    const dataRef = useRef(data);
+
+    // Keep refs in sync with props
+    useEffect(() => {
+        headersRef.current = headers;
+        dataRef.current = data;
+    }, [headers, data]);
+
     // Cleanup timeout on unmount to prevent state updates on unmounted component
     useEffect(() => {
         return () => {
@@ -157,8 +168,17 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
     }, []);
 
     const handleCopy = useCallback(async () => {
-        const tsvContent = generateTsvContent(headers, data);
-        const htmlContent = generateStyledHtmlTable(headers, data);
+        // Use refs to ensure we always get the latest props
+        const currentHeaders = headersRef.current;
+        const currentData = dataRef.current;
+
+        // Debug: Log what we're copying to help diagnose translation issues
+        console.log('[CopyButton] Copying with headers:', currentHeaders);
+        console.log('[CopyButton] First row data keys:', currentData.length > 0 ? Object.keys(currentData[0]) : 'no data');
+        console.log('[CopyButton] First row sample:', currentData.length > 0 ? currentData[0] : 'no data');
+
+        const tsvContent = generateTsvContent(currentHeaders, currentData);
+        const htmlContent = generateStyledHtmlTable(currentHeaders, currentData);
 
         const showCopiedFeedback = () => {
             setCopied(true);
@@ -223,7 +243,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({ headers, data }) => {
         } catch (err) {
             console.error('All clipboard methods failed:', err);
         }
-    }, [headers, data]);
+    }, []); // Empty deps - refs always have latest values
 
     return (
         <button
