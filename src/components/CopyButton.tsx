@@ -8,34 +8,79 @@ interface CopyButtonProps {
 }
 
 /**
- * Generates an HTML table for clipboard export.
- * Uses no colors - black text, black borders, transparent background.
- * Applies styles to EVERY cell individually to ensure persistence in Word/Outlook.
+ * Generates an HTML table for clipboard export that matches the UI styling.
+ * Styled for Word/Outlook compatibility with:
+ * - Dark navy header row (#1e2a3a)
+ * - Bold uppercase column titles in white
+ * - Evenly spaced columns with consistent row height
+ * - Clean white rows with subtle horizontal separators
+ * - Left-aligned text with consistent padding
+ * Applies inline styles to EVERY cell individually to ensure persistence in Word/Outlook.
  */
 const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[]): string => {
-    // Table style with no colors
-    const tableStyle = "border-collapse: collapse; font-family: 'Calibri Light', Calibri, sans-serif; font-size: 11pt; font-weight: 300;";
-    // Row style (no background)
-    const rowStyle = "";
-    // Cell style with black borders, no background color
-    const cellStyle = "border: 1px solid #000000; padding: 4px 8px; text-align: left; font-weight: 300;";
+    const columnCount = headers.length;
+    const columnWidth = columnCount > 0 ? Math.floor(100 / columnCount) : 100;
+
+    // Table style - fixed layout for even columns
+    const tableStyle = [
+        "border-collapse: collapse",
+        "table-layout: fixed",
+        "width: 100%",
+        "font-family: Calibri, Arial, sans-serif",
+        "font-size: 11pt"
+    ].join("; ");
+
+    // Header row style - dark navy background
+    const headerRowStyle = "background-color: #1e2a3a";
+
+    // Header cell style - white uppercase bold text, left-aligned with padding
+    const headerCellStyle = [
+        `width: ${columnWidth}%`,
+        "background-color: #1e2a3a",
+        "color: #ffffff",
+        "font-weight: bold",
+        "text-transform: uppercase",
+        "font-size: 10pt",
+        "letter-spacing: 0.5pt",
+        "padding: 12pt 15pt",
+        "text-align: left",
+        "border: none",
+        "border-bottom: 1px solid #1e2a3a"
+    ].join("; ");
+
+    // Data row style - white background
+    const dataRowStyle = "background-color: #ffffff";
+
+    // Data cell style - gray text, left-aligned with subtle bottom border
+    const dataCellStyle = [
+        `width: ${columnWidth}%`,
+        "background-color: #ffffff",
+        "color: #374151",
+        "font-weight: normal",
+        "font-size: 11pt",
+        "padding: 12pt 15pt",
+        "text-align: left",
+        "border: none",
+        "border-bottom: 1px solid #e8e8e8",
+        "vertical-align: middle"
+    ].join("; ");
 
     // Generate header row with styled cells
     const headerCells = headers
-        .map(h => `<th style="${cellStyle}">${escapeHtml(h)}</th>`)
+        .map(h => `<th style="${headerCellStyle}">${escapeHtml(h.toUpperCase())}</th>`)
         .join('');
 
     // Generate body rows with styled cells
     const bodyRows = data
         .map(row => {
             const cells = headers
-                .map(h => `<td style="${cellStyle}">${escapeHtml(cleanValue(row[h]))}</td>`)
+                .map(h => `<td style="${dataCellStyle}">${escapeHtml(cleanValue(row[h]))}</td>`)
                 .join('');
-            return `<tr style="${rowStyle}">${cells}</tr>`;
+            return `<tr style="${dataRowStyle}">${cells}</tr>`;
         })
         .join('');
 
-    return `<table style="${tableStyle}"><thead><tr style="${rowStyle}">${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
+    return `<table style="${tableStyle}"><thead><tr style="${headerRowStyle}">${headerCells}</tr></thead><tbody>${bodyRows}</tbody></table>`;
 };
 
 /**
