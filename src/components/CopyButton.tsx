@@ -14,28 +14,27 @@ interface CopyButtonProps {
  * - Bold uppercase column titles in white
  * - Evenly spaced columns with consistent row height
  * - Clean white rows with subtle horizontal separators
- * - Left-aligned text with consistent padding
+ * - Center-aligned text (horizontal + vertical) for all cells
+ * - AutoFit to Contents when pasted into Word
  * Applies inline styles to EVERY cell individually to ensure persistence in Word/Outlook.
  */
 const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[]): string => {
-    const columnCount = headers.length;
-    const columnWidth = columnCount > 0 ? Math.floor(100 / columnCount) : 100;
-
-    // Table style - fixed layout for even columns
+    // Table style - auto layout for Word AutoFit to Contents
     const tableStyle = [
         "border-collapse: collapse",
-        "table-layout: fixed",
-        "width: 100%",
+        "table-layout: auto",
+        "width: auto",
         "font-family: Calibri, Arial, sans-serif",
-        "font-size: 11pt"
+        "font-size: 11pt",
+        "mso-table-lspace: 0pt",
+        "mso-table-rspace: 0pt"
     ].join("; ");
 
     // Header row style - dark navy background
     const headerRowStyle = "background-color: #1e2a3a";
 
-    // Header cell style - white uppercase bold text, left-aligned with padding
+    // Header cell style - white uppercase bold text, center-aligned with padding
     const headerCellStyle = [
-        `width: ${columnWidth}%`,
         "background-color: #1e2a3a",
         "color: #ffffff",
         "font-weight: bold",
@@ -43,26 +42,28 @@ const generateStyledHtmlTable = (headers: string[], data: Record<string, any>[])
         "font-size: 10pt",
         "letter-spacing: 0.5pt",
         "padding: 12pt 15pt",
-        "text-align: left",
+        "text-align: center",
+        "vertical-align: middle",
         "border: none",
-        "border-bottom: 1px solid #1e2a3a"
+        "border-bottom: 1px solid #1e2a3a",
+        "white-space: nowrap"
     ].join("; ");
 
     // Data row style - white background
     const dataRowStyle = "background-color: #ffffff";
 
-    // Data cell style - gray text, left-aligned with subtle bottom border
+    // Data cell style - gray text, center-aligned with subtle bottom border
     const dataCellStyle = [
-        `width: ${columnWidth}%`,
         "background-color: #ffffff",
         "color: #374151",
         "font-weight: normal",
         "font-size: 11pt",
         "padding: 12pt 15pt",
-        "text-align: left",
+        "text-align: center",
+        "vertical-align: middle",
         "border: none",
         "border-bottom: 1px solid #e8e8e8",
-        "vertical-align: middle"
+        "white-space: nowrap"
     ].join("; ");
 
     // Generate header row with styled cells
