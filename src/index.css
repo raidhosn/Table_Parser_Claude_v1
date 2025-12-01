@@ -4,43 +4,54 @@
 
 /* Global table styling for consistency across all tables */
 @layer components {
-  /* Table container */
+  /* Table container - full width with rounded top corners only */
   .table-container {
-    @apply w-full bg-white rounded-lg border border-gray-200 overflow-hidden;
+    @apply w-full bg-white overflow-hidden;
+    border-radius: 8px 8px 0 0;
   }
 
-  /* Table element */
+  /* Table element - full width, no borders */
   table {
     @apply w-full border-collapse;
+    table-layout: fixed;
   }
 
-  /* Header row styling */
+  /* Header row styling - dark navy with rounded top corners */
   thead tr {
-    background-color: #1a2744;
-    border-left: 4px solid #3b82f6;
+    background-color: #1e2a3a;
+  }
+
+  /* First header cell gets rounded top-left corner */
+  thead th:first-child {
+    border-top-left-radius: 8px;
+  }
+
+  /* Last header cell gets rounded top-right corner */
+  thead th:last-child {
+    border-top-right-radius: 8px;
   }
 
   thead th {
-    @apply text-white uppercase font-semibold text-center whitespace-nowrap;
-    font-size: 13px;
+    @apply text-white uppercase font-bold text-center whitespace-nowrap;
+    font-size: 12px;
     letter-spacing: 0.05em;
-    padding: 14px 16px;
+    padding: 16px 20px;
   }
 
-  /* Data rows - no alternating colors */
+  /* Data rows - white background with subtle horizontal separators */
   tbody tr {
     @apply bg-white;
-    border-bottom: 1px solid #e5e7eb;
+    border-bottom: 1px solid #e8e8e8;
   }
 
   tbody tr:last-child {
-    border-bottom: none;
+    border-bottom: 1px solid #e8e8e8;
   }
 
   tbody td {
     @apply text-center whitespace-nowrap;
     color: #374151;
     font-size: 14px;
-    padding: 14px 16px;
+    padding: 16px 20px;
   }
 }

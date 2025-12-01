@@ -8,24 +8,27 @@ interface DataTableProps {
 
 export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
     const columnCount = headers.length;
-    // First column (usually Subscription ID) is wider at 30%, rest distributed equally
-    const getColumnWidth = (index: number) => {
-        if (columnCount <= 1) return '100%';
-        if (index === 0) return '30%';
-        return `${70 / (columnCount - 1)}%`;
+    // Evenly distribute column widths across all columns
+    const getColumnWidth = () => {
+        if (columnCount <= 0) return '100%';
+        return `${100 / columnCount}%`;
     };
 
     return (
-        <div className="w-full bg-white rounded-lg border border-gray-200 overflow-hidden">
+        <div className="w-full bg-white overflow-hidden" style={{ borderRadius: '8px 8px 0 0' }}>
             <table className="w-full table-fixed border-collapse">
                 <thead>
-                    <tr className="bg-[#1a2744] border-l-4 border-l-blue-500">
+                    <tr className="bg-[#1e2a3a]">
                         {headers.map((header, index) => (
                             <th
                                 key={index}
                                 scope="col"
-                                style={{ width: getColumnWidth(index) }}
-                                className="px-4 py-3.5 text-center text-[13px] font-semibold text-white uppercase tracking-wider whitespace-nowrap"
+                                style={{
+                                    width: getColumnWidth(),
+                                    borderTopLeftRadius: index === 0 ? '8px' : '0',
+                                    borderTopRightRadius: index === columnCount - 1 ? '8px' : '0'
+                                }}
+                                className="px-5 py-4 text-center text-xs font-bold text-white uppercase tracking-wider whitespace-nowrap"
                             >
                                 {header}
                             </th>
@@ -36,13 +39,13 @@ export const DataTable: React.FC<DataTableProps> = ({ headers, data }) => {
                     {data.map((row, rowIndex) => (
                         <tr
                             key={rowIndex}
-                            className={`bg-white ${rowIndex !== data.length - 1 ? 'border-b border-gray-200' : ''}`}
+                            className="bg-white border-b border-gray-200"
                         >
                             {headers.map((header, colIndex) => (
                                 <td
                                     key={`${rowIndex}-${colIndex}`}
-                                    style={{ width: getColumnWidth(colIndex) }}
-                                    className="px-4 py-3.5 whitespace-nowrap text-sm text-gray-700 text-center"
+                                    style={{ width: getColumnWidth() }}
+                                    className="px-5 py-4 whitespace-nowrap text-sm text-gray-700 text-center"
                                 >
                                     {cleanValue(row[header])}
                                 </td>
