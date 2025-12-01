@@ -32,10 +32,11 @@ export const CategorizedResultsView: React.FC<ResultsViewProps> = ({
 
     // Translate headers for display when Portuguese is active
     // Used by: DataTable (display), CopyButton (clipboard), ExcelExportButton (export)
-    const displayHeaders = useMemo(() =>
-        visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h),
-        [visibleHeaders, isTranslated]
-    );
+    const displayHeaders = useMemo(() => {
+        const result = visibleHeaders.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
+        console.log('[CategorizedResultsView] isTranslated=', isTranslated, 'displayHeaders:', result);
+        return result;
+    }, [visibleHeaders, isTranslated]);
 
     // Translate both row keys (to match displayHeaders) and cell values for display
     // This ensures Copy/Export operations use the exact data shown in the UI
@@ -131,7 +132,11 @@ export const UnifiedResultsView: React.FC<ResultsViewProps> = ({
 
     // Translate headers for display when Portuguese is active
     // Used by: DataTable (display), CopyButton (clipboard), ExcelExportButton (export)
-    const displayHeaders = useMemo(() => headersWithRdQuota.map(h => isTranslated ? (DICTIONARY[h] || h) : h), [headersWithRdQuota, isTranslated]);
+    const displayHeaders = useMemo(() => {
+        const result = headersWithRdQuota.map(h => isTranslated ? (DICTIONARY[h] || h) : h);
+        console.log('[UnifiedResultsView] isTranslated=', isTranslated, 'displayHeaders:', result);
+        return result;
+    }, [headersWithRdQuota, isTranslated]);
 
     // Translate both row keys (to match displayHeaders) and cell values for display
     // This ensures Copy/Export operations use the exact data shown in the UI
